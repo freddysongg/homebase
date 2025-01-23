@@ -1,0 +1,80 @@
+Database Structure
+
+1. Users Collection
+Purpose: Stores information about users (roommates).
+Fields:
+_id: Unique identifier (ObjectId).
+name: String (e.g., "Michael Chen").
+email: String.
+phone: String.
+preferences: Object with fields:
+    notifications: Boolean (e.g., true/false).
+    reminder_times: Array of strings (e.g., ["8:00 AM", "6:00 PM"]).
+chore_history: Array of objects:
+    chore_id: ObjectId (reference to a chore).
+    status: String (e.g., "completed", "pending").
+expense_contributions: Array of objects:
+    expense_id: ObjectId (reference to an expense).
+    amount_paid: Number.
+
+2. Chores Collection
+Purpose: Manages household chores.
+Fields:
+    _id: Unique identifier (ObjectId).
+    description: String (e.g., "Clean the kitchen").
+    assigned_to: Array of ObjectIds (user references).
+    due_date: Date.
+    status: String (e.g., "completed", "pending").
+    rotation: Boolean (e.g., true/false for rotating tasks among roommates).
+
+3. Expenses Collection
+Purpose: Tracks shared household expenses.
+Fields:
+    _id: Unique identifier (ObjectId).
+    description: String (e.g., "Groceries").
+    total_amount: Number.
+    split_among: Array of ObjectIds (user references).
+    paid_by: ObjectId (user reference).
+    payment_status: Array of objects:
+        user_id: ObjectId (user reference).
+        status: String (e.g., "paid", "pending").
+        amount_due: Number.
+
+4. Household Tasks Collection
+Purpose: Manages one-time or recurring general household tasks.
+Fields:
+    _id: Unique identifier (ObjectId).
+    name: String (e.g., "Replace air filter").
+    deadline: Date.
+    status: String (e.g., "in-progress", "completed").
+    assigned_to: Array of ObjectIds (user references).
+
+5. Notifications Collection
+Purpose: Handles in-app notifications and reminders.
+Fields:
+    _id: Unique identifier (ObjectId).
+    type: String (e.g., "chore reminder", "expense due").
+    message: String (e.g., "Chore 'Clean the kitchen' is due tomorrow").
+    recipient_ids: Array of ObjectIds (user references).
+    timestamp: Date.
+
+6. Groups Collection
+Purpose: Represents household groups.
+Fields:
+    _id: Unique identifier (ObjectId).
+    group_name: String (e.g., "Apartment 4B").
+    members: Array of ObjectIds (user references).
+    settings: Object with fields:
+        chore_rotation: Boolean.
+        default_expense_split: String (e.g., "equal", "custom").
+
+Key Features
+Data Relationships:
+    Users linked to Chores, Expenses, Notifications, and Groups via _id.
+    Groups link multiple users for shared settings and task management.
+Indexing:
+    Index on _id, due_date, and group_name for efficient querying.
+Scalability:
+    Flexible schema for adding future features like task prioritization, gamification, or third-party payment integration.
+Security:
+    Use MongoDB’s built-in authentication and role-based access control (RBAC).
