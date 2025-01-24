@@ -5,8 +5,9 @@ Purpose: Stores information about users (roommates).
 Fields:
 _id: Unique identifier (ObjectId).
 name: String (e.g., "Michael Chen").
-email: String.
+email: String (unique, required).
 phone: String.
+password: String (hashed, required, min length: 8).
 preferences: Object with fields:
     notifications: Boolean (e.g., true/false).
     reminder_times: Array of strings (e.g., ["8:00 AM", "6:00 PM"]).
