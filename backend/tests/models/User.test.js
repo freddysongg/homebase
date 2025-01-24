@@ -7,15 +7,18 @@ describe('User Model', () => {
     await connectDB();
   });
 
-  afterAll(async () => {
+  beforeEach(async () => {
     await mongoose.connection.db.dropDatabase();
+  });
+
+  afterAll(async () => {
     await disconnectDB();
   });
 
   test('should create a new user successfully', async () => {
     const userData = {
       name: 'Test User',
-      email: 'test@example.com',
+      email: `test${Date.now()}@example.com`,
       password: 'password123'
     };
 
