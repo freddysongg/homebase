@@ -8,13 +8,25 @@ const About = () => {
   useEffect(() => {
     const featureElements = document.querySelectorAll('.feature-item');
 
-    featureElements.forEach((el, index) => {
-      animate(
-        el,
-        { y: [50, 0], opacity: [0, 1] },
-        { delay: index * 0.2, duration: 0.6, easing: 'ease-out' }
-      );
-    });
+    const observer = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            animate(
+              entry.target,
+              { y: [50, 0], opacity: [0, 1] },
+              { delay: index * 0.2, duration: 0.6, easing: 'ease-out' }
+            );
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    featureElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
   }, []);
 
   return (
