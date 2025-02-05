@@ -35,8 +35,6 @@ const About = () => {
         <h2 className="text-5xl font-extrabold text-center mb-14">
           Optimize Your Home Experience 🚀
         </h2>
-
-        {/* Features Grid */}
         <div className="grid md:grid-cols-2 gap-10">
           {features.map((feature, index) => (
             <div key={index} className="feature-item flex space-x-4 opacity-0">
