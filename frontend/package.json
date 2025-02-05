@@ -11,6 +11,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "framer-motion": "^12.1.0",
     "motion": "^12.1.0",
     "next": "15.1.6",
     "react": "^19.0.0",
