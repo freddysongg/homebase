@@ -51,24 +51,28 @@ npm run dev
 ```
 backend/
 ├── config/            # Configuration files
-│   └── db.js          # Database connection setup
+│   └── db.js         # Database connection setup
 ├── controllers/       # Route controllers
 │   └── userController.js # User-related endpoints
-├── models/            # Mongoose models
-│   ├── Chore.js       # Chore model
-│   ├── Expense.js     # Expense model
+├── models/           # Mongoose models
+│   ├── Chore.js     # Chore model
+│   ├── Expense.js   # Expense model (updated)
 │   ├── HouseholdTask.js # Household task model
-│   ├── Notification.js # Notification model
-│   └── User.js        # User model
-├── tests/             # Test files
-│   └── models/        # Model tests
-│       └── User.test.js # User model tests
-├── .env               # Environment variables
-├── .gitignore         # Git ignore rules
+│   ├── Notification.js # Notification model (updated)
+│   └── User.js      # User model
+├── tests/           # Test files
+│   └── models/      # Model tests
+│       ├── Chore.test.js
+│       ├── Expense.test.js
+│       ├── HouseholdTask.test.js
+│       ├── Notification.test.js
+│       └── User.test.js
+├── .env             # Environment variables
+├── .gitignore       # Git ignore rules
 ├── Database_Structure.txt # Database schema documentation
-├── jest.config.js     # Jest configuration
-├── package.json       # Project dependencies and scripts
-├── server.js          # Main application entry point
+├── jest.config.js   # Jest configuration
+├── package.json     # Project dependencies and scripts
+├── server.js        # Main application entry point
 ```
 
 ## Key Files
@@ -82,6 +86,30 @@ Run tests using Jest:
 ```bash
 npm test
 ```
+
+All models have comprehensive test coverage including:
+- Validation of required fields
+- Data type verification
+- Business logic validation
+- Error handling
+
+## Model Validations
+Each model includes built-in validations:
+
+### Expense Model
+- Positive amounts only
+- Required fields: description, total_amount, paid_by, split_among
+- Split amounts must be properly structured with user and amount
+
+### User Model
+- Email validation and uniqueness
+- Password minimum length: 8 characters
+- Required fields validation
+
+### Notification Model
+- Read status tracking
+- Required recipient validation
+- Message and type validation
 
 ## API Documentation
 The backend provides RESTful APIs for:

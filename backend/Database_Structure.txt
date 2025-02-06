@@ -33,13 +33,14 @@ Purpose: Tracks shared household expenses.
 Fields:
     _id: Unique identifier (ObjectId).
     description: String (e.g., "Groceries").
-    total_amount: Number.
-    split_among: Array of ObjectIds (user references).
-    paid_by: ObjectId (user reference).
-    payment_status: Array of objects:
-        user_id: ObjectId (user reference).
-        status: String (e.g., "paid", "pending").
-        amount_due: Number.
+    total_amount: Number (must be positive).
+    split_among: Array of objects:
+        user: ObjectId (user reference).
+        amount: Number (required, individual share amount).
+    paid_by: ObjectId (user reference, required).
+    status: String (e.g., "pending", "completed").
+    createdAt: Date (automatically managed by timestamps).
+    updatedAt: Date (automatically managed by timestamps).
 
 4. Household Tasks Collection
 Purpose: Manages one-time or recurring general household tasks.
@@ -58,6 +59,7 @@ Fields:
     message: String (e.g., "Chore 'Clean the kitchen' is due tomorrow").
     recipient_ids: Array of ObjectIds (user references).
     timestamp: Date.
+    read_status: Boolean (default: false).
 
 6. Groups Collection
 Purpose: Represents household groups.
@@ -79,3 +81,11 @@ Scalability:
     Flexible schema for adding future features like task prioritization, gamification, or third-party payment integration.
 Security:
     Use MongoDB’s built-in authentication and role-based access control (RBAC).
+
+Additional Notes:
+- All collections include timestamps (createdAt, updatedAt) by default
+- Proper validation is in place for:
+  * Positive amounts in expenses
+  * Future dates for deadlines
+  * Required fields across all models
+  * Email format and password length in User model
