@@ -11,28 +11,32 @@ const householdTaskSchema = new mongoose.Schema({
     required: [true, 'Deadline is required'],
     validate: {
       validator: function(value) {
-        return value > Date.now();
+        return value > new Date();
       },
       message: 'Deadline must be in the future'
     }
   },
   status: {
     type: String,
-    enum: ['in-progress', 'completed'],
-    default: 'in-progress'
+    enum: ['pending', 'in-progress', 'completed'],
+    default: 'pending'
   },
-  assigned_to: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'At least one user must be assigned']
-  }]
+  assigned_to: {
+    type: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    required: [true, 'At least one user must be assigned'],
+    validate: {
+      validator: function(v) {
+        return Array.isArray(v) && v.length > 0;
+      },
+      message: 'At least one user must be assigned'
+    }
+  }
 }, {
   timestamps: true
 });
-
-// Indexes for frequently queried fields
-householdTaskSchema.index({ deadline: 1 });
-householdTaskSchema.index({ status: 1 });
 
 const HouseholdTask = mongoose.model('HouseholdTask', householdTaskSchema);
 

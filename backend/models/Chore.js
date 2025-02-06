@@ -6,17 +6,25 @@ const choreSchema = new mongoose.Schema({
     required: [true, 'Description is required'],
     trim: true
   },
-  assigned_to: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'At least one user must be assigned']
-  }],
+  assigned_to: {
+    type: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    required: [true, 'At least one user must be assigned'],
+    validate: {
+      validator: function(v) {
+        return Array.isArray(v) && v.length > 0;
+      },
+      message: 'At least one user must be assigned'
+    }
+  },
   due_date: {
     type: Date,
     required: [true, 'Due date is required'],
     validate: {
       validator: function(value) {
-        return value > Date.now();
+        return value > new Date();
       },
       message: 'Due date must be in the future'
     }
