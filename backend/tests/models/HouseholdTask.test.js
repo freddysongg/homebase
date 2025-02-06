@@ -16,9 +16,10 @@ describe('HouseholdTask Model', () => {
       mongoose.connection.collection('users').deleteMany({})
     ]);
     
+    const timestamp = Date.now() + Math.floor(Math.random() * 1000);
     testUser = await User.create({
       name: 'Test User',
-      email: `test${Date.now()}@example.com`,
+      email: `test${timestamp}@example.com`,
       password: 'password123'
     });
   });
