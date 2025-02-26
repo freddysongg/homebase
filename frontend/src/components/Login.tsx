@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -23,9 +22,9 @@ const Login = () => {
       const response = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
@@ -49,14 +48,16 @@ const Login = () => {
     }
   };
 
+  const handleGoogleSignIn = () => {
+    alert('Feature coming soon');
+  };
+
   return (
     <div className="flex items-center justify-center h-screen text-white">
       <div className="bg-black p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
         {error && (
-          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">
-            {error}
-          </div>
+          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">{error}</div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -89,7 +90,7 @@ const Login = () => {
         </form>
         <div className="mt-4 text-center">
           <button
-            onClick={() => signIn('google')}
+            onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center bg-blue-500 hover:bg-blue-600 transition p-2 rounded-md font-bold"
           >
             <Image src="/google.png" alt="Google Logo" width={20} height={20} className="mr-2" />

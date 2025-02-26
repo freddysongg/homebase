@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -9,6 +10,7 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,9 +21,9 @@ const Signup = () => {
       const response = await fetch('http://localhost:5001/api/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password })
       });
 
       const data = await response.json();
@@ -31,7 +33,9 @@ const Signup = () => {
       }
 
       console.log('Signup successful:', data);
-      // Redirect or show success message
+
+      // Redirect to login page after successful signup
+      router.push('/login');
     } catch (err: any) {
       setError(err.message || 'An error occurred during signup.');
       console.error('Signup error:', err);
@@ -45,9 +49,7 @@ const Signup = () => {
       <div className="bg-black p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-center mb-6">Sign Up</h2>
         {error && (
-          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">
-            {error}
-          </div>
+          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">{error}</div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
