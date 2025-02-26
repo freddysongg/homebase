@@ -3,6 +3,8 @@ import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { createUser, getUsers, getUser } from './controllers/userController.js';
+import { createChore, deleteChore, getChore, getChores, updateChore } from './controllers/choreController.js';
+import { loginUser } from './controllers/loginController.js';
 
 // Load environment variables
 dotenv.config();
@@ -18,9 +20,23 @@ app.use(express.json());
 connectDB();
 
 // Routes
+
+//login
+app.post('/api/login', loginUser);
+
+//user
 app.post('/api/users', createUser);
 app.get('/api/users', getUsers);
 app.get('/api/users/:id', getUser);
+
+//chore
+app.post('api/chores', createChore);
+app.get('api/chores', getChores);
+app.get('api/chores/:id', getChore);
+app.put('api/chores/:id', updateChore);
+app.delete('api/chores/:id', deleteChore);
+
+//task
 
 // Basic route for health check
 app.get('/', (req, res) => {

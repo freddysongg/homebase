@@ -4,21 +4,60 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Logging in with:', { email, password });
-    // Implement API call
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Call the backend login API
+      const response = await fetch('http://localhost:5001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed. Please check your credentials.');
+      }
+
+      console.log('Login successful:', data);
+
+      // Save the token to localStorage or cookies (optional)
+      localStorage.setItem('token', data.token);
+
+      // Redirect to the dashboard or home page
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center h-screen text-white">
       <div className="bg-black p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
+        {error && (
+          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <div className="block text-sm font-medium">Email</div>
@@ -42,9 +81,10 @@ const Login = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold"
+            className="w-full bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold disabled:bg-gray-400"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? 'Logging In...' : 'Login'}
           </button>
         </form>
         <div className="mt-4 text-center">

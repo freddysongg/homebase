@@ -7,19 +7,48 @@ const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-    console.log('Signing up with:', { name, email, password });
+    try {
+      const response = await fetch('http://localhost:5001/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    // API call for registration
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong during signup.');
+      }
+
+      console.log('Signup successful:', data);
+      // Redirect or show success message
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during signup.');
+      console.error('Signup error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center h-screen text-white">
       <div className="bg-black p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-center mb-6">Sign Up</h2>
+        {error && (
+          <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <div className="block text-sm font-medium">Full Name</div>
@@ -53,9 +82,10 @@ const Signup = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-md font-bold"
+            className="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-md font-bold disabled:bg-gray-400"
+            disabled={isLoading}
           >
-            Sign Up
+            {isLoading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
         <div className="text-center mt-4">

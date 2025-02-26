@@ -74,6 +74,13 @@ userSchema.pre('save', async function(next) {
   }
 });
 
+// Generate JWT token
+userSchema.methods.generateAuthToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: '30d', // Token expires in 30 days
+  });
+};
+
 const User = mongoose.model('User', userSchema);
 
 export default User;
