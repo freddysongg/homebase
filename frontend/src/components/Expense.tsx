@@ -45,24 +45,24 @@ const Expense: React.FC = () => {
     setSplitAmong([{ user: '', amount: 0 }]);
   };
 
-const handleSplitChange = (index: number, field: keyof SplitAmong, value: string | number) => {
-  const updatedSplit = [...splitAmong];
+  const handleSplitChange = (index: number, field: keyof SplitAmong, value: string | number) => {
+    const updatedSplit = [...splitAmong];
 
-  if (field === 'user') {
-    updatedSplit[index][field] = value as string;
-  } else if (field === 'amount') {
-    updatedSplit[index][field] = Number(value); 
-  }
+    if (field === 'user') {
+      updatedSplit[index][field] = value as string;
+    } else if (field === 'amount') {
+      updatedSplit[index][field] = Number(value);
+    }
 
-  setSplitAmong(updatedSplit);
-};
+    setSplitAmong(updatedSplit);
+  };
 
   const addSplitField = () => {
     setSplitAmong([...splitAmong, { user: '', amount: 0 }]);
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg mt-8">
+    <div className="max-w-3xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg my-8">
       <h1 className="text-3xl font-bold mb-6 text-center">Expense Tracker</h1>
       <div className="mb-6 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-3">Add Expense</h2>

@@ -3,9 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Expense from '@/components/Expense';
+import Tasks from '@/components/Tasks';
 
-export default function ExpensePage() {
+export default function TasksPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -22,7 +22,7 @@ export default function ExpensePage() {
 
   return (
     <div>
-      <Expense />
+      <Tasks />
     </div>
   );
 }

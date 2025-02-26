@@ -16,7 +16,7 @@ const Landing = () => {
       <div className="relative flex flex-col items-center gap-7 text-center">
         <h1 className="text-[58px] font-extrabold">Welcome to HomeBase</h1>
         <p className="-mt-5 text-xl text-gray-300">A Shared Home Management App for Roommates</p>
-        <Button title="Get Started" link="/login" />
+        <Button title="Get Started" link="/expense" />
       </div>
     </div>
   );
