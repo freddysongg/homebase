@@ -1,7 +1,20 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
-export default function SessionProviderWrapper({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+const SessionContext = createContext(null);
+
+export default function SessionProviderWrapper({ children }) {
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setSession({ token });
+    }
+  }, []);
+
+  return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>;
 }
+
+export const useSession = () => useContext(SessionContext);

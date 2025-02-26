@@ -18,7 +18,6 @@ const Login = () => {
     setError(null);
 
     try {
-      // Call the backend login API
       const response = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
         headers: {
@@ -33,13 +32,9 @@ const Login = () => {
         throw new Error(data.message || 'Login failed. Please check your credentials.');
       }
 
-      console.log('Login successful:', data);
-
-      // Save the token to localStorage or cookies (optional)
       localStorage.setItem('token', data.token);
-
-      // Redirect to the dashboard or home page
-      router.push('/dashboard');
+      router.push('/expense');
+      window.location.reload();
     } catch (err: any) {
       setError(err.message || 'An error occurred during login.');
       console.error('Login error:', err);
