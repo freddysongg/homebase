@@ -53,7 +53,7 @@ const Chore: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg mt-8">
+    <div className="max-w-5xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg my-8">
       <h1 className="text-3xl font-bold mb-6 text-center">Chore Management</h1>
       <div className="mb-6 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-3">Add Roommate</h2>
