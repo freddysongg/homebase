@@ -13,16 +13,14 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setIsLoggedIn(true);
-    }
+    setIsLoggedIn(!!token);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
-    setIsDropdownOpen(false); 
-    router.push('/login');
+    setIsDropdownOpen(false);
+    router.push('/'); 
   };
 
   useEffect(() => {
@@ -33,17 +31,16 @@ const Navbar: React.FC = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
-    <nav className="bg-black text-white p-4">
+    <nav className="bg-black text-white p-4 fixed top-0 left-0 w-full z-[1000] shadow-md">
       <div className="max-w-7xl mx-20 flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold">
           HomeBase
         </Link>
+
         <div className="hidden md:flex flex-grow justify-center space-x-16">
           {isLoggedIn && (
             <>
@@ -59,6 +56,7 @@ const Navbar: React.FC = () => {
             </>
           )}
         </div>
+
         <div className="hidden md:flex items-center space-x-6">
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
@@ -69,7 +67,7 @@ const Navbar: React.FC = () => {
                 User ▼
               </button>
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[1000]">
                   <div className="py-1">
                     <button
                       onClick={handleLogout}
@@ -87,46 +85,34 @@ const Navbar: React.FC = () => {
             </Link>
           )}
         </div>
+
         <button onClick={() => setIsOpen(!isOpen)} className="md:hidden focus:outline-none">
           {isOpen ? '✖' : '☰'}
         </button>
       </div>
+
       {isOpen && (
-        <div className="md:hidden flex flex-col items-center mt-4 space-y-2">
-          {isLoggedIn && (
+        <div className="md:hidden flex flex-col items-center mt-4 space-y-2 z-[1000] bg-black w-full py-4">
+          {isLoggedIn ? (
             <>
-              <Link
-                href="/expense"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/expense" className="hover:text-blue-400 transition" onClick={() => setIsOpen(false)}>
                 Expenses
               </Link>
-              <Link
-                href="/chore"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/chore" className="hover:text-blue-400 transition" onClick={() => setIsOpen(false)}>
                 Chores
               </Link>
-              <Link
-                href="/task"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/tasks" className="hover:text-blue-400 transition" onClick={() => setIsOpen(false)}>
                 Tasks
               </Link>
-              <button onClick={handleLogout} className="hover:text-blue-400 transition">
+              <button
+                onClick={handleLogout}
+                className="hover:text-blue-400 transition"
+              >
                 Logout
               </button>
             </>
-          )}
-          {!isLoggedIn && (
-            <Link
-              href="/login"
-              className="hover:text-blue-400 transition"
-              onClick={() => setIsOpen(false)}
-            >
+          ) : (
+            <Link href="/login" className="hover:text-blue-400 transition" onClick={() => setIsOpen(false)}>
               Login
             </Link>
           )}

@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="text-sm text-gray-300">
           <p>
             Email:{' '}
-            <a href="mailto:info@mywebsite.com" className="text-white hover:underline">
+            <a href="mailto:info@homebase.com" className="text-white hover:underline">
               info@homebase.com
             </a>
           </p>
@@ -21,17 +21,20 @@ const Footer = () => {
         </div>
 
         <nav className="flex space-x-4 text-sm font-medium mt-3 md:mt-0">
-          <Link href="/chore-management" className="hover:underline">
-            Chore Management
+          <Link href="/tasks" className="hover:underline">
+            Tasks
           </Link>
-          <Link href="/expense-tracking" className="hover:underline">
-            Expense Tracking
+          <Link href="/chore" className="hover:underline">
+            Chores
           </Link>
-          <Link href="/household-tasks" className="hover:underline">
-            Household Tasks
+          <Link href="/expense" className="hover:underline">
+            Expenses
           </Link>
-          <Link href="/user-profiles" className="hover:underline">
-            User Profiles
+          <Link href="/signup" className="hover:underline">
+            Sign Up
+          </Link>
+          <Link href="/login" className="hover:underline">
+            Login
           </Link>
         </nav>
 

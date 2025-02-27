@@ -12,17 +12,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5001/api/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
@@ -35,9 +33,13 @@ const Login = () => {
       localStorage.setItem('token', data.token);
       router.push('/expense');
       window.location.reload();
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login.');
-      console.error('Login error:', err);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error('Login error:', err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +58,7 @@ const Login = () => {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <div className="block text-sm font-medium">Email</div>
+            <label className="block text-sm font-medium">Email</label>
             <input
               type="email"
               className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -66,7 +68,7 @@ const Login = () => {
             />
           </div>
           <div>
-            <div className="block text-sm font-medium">Password</div>
+            <label className="block text-sm font-medium">Password</label>
             <input
               type="password"
               className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"

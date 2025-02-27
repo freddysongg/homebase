@@ -1,22 +1,34 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import Tasks from '@/components/Tasks';
+import { useState, useEffect } from "react";
+
+interface TaskType {
+  _id: string;
+  title: string;
+}
 
 export default function TasksPage() {
-  const router = useRouter();
+  const [tasks, setTasks] = useState<TaskType[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
+    async function fetchTasks() {
+      const response = await fetch("http://localhost:50001/api/tasks");
+      if (response.ok) {
+        const data: TaskType[] = await response.json();
+        setTasks(data);
+      }
     }
-  }, [router]);
+    fetchTasks();
+  }, []);
 
   return (
-    <div>
-      <Tasks />
+    <div> 
+      <h1>Task List</h1>
+      <ul>
+        {tasks.map((task) => (
+          <li key={task._id}>{task.title}</li>
+        ))}
+      </ul>
     </div>
   );
 }

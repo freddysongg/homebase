@@ -4,41 +4,40 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-const Signup = () => {
-  const [name, setName] = useState('');
+const SignUp = () => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => { 
+    event.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5001/api/users', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, password })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong during signup.');
+        throw new Error(data.message || 'Signup failed. Please try again.');
       }
 
-      console.log('Signup successful:', data);
-
-      // Redirect to login page after successful signup
       router.push('/login');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during signup.');
-      console.error('Signup error:', err);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error('Signup error:', err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -51,19 +50,19 @@ const Signup = () => {
         {error && (
           <div className="mb-4 p-2 bg-red-500 text-white rounded-md text-center">{error}</div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <div className="block text-sm font-medium">Full Name</div>
+            <label className="block text-sm font-medium">Username</label>
             <input
               type="text"
               className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
           <div>
-            <div className="block text-sm font-medium">Email</div>
+            <label className="block text-sm font-medium">Email</label>
             <input
               type="email"
               className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -73,7 +72,7 @@ const Signup = () => {
             />
           </div>
           <div>
-            <div className="block text-sm font-medium">Password</div>
+            <label className="block text-sm font-medium">Password</label>
             <input
               type="password"
               className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -84,7 +83,7 @@ const Signup = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 transition p-2 rounded-md font-bold disabled:bg-gray-400"
+            className="w-full bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold disabled:bg-gray-400"
             disabled={isLoading}
           >
             {isLoading ? 'Signing Up...' : 'Sign Up'}
@@ -103,4 +102,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default SignUp;

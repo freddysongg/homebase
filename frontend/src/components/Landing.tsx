@@ -5,7 +5,7 @@ const Landing = () => {
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center text-white overflow-hidden">
       <video
-        className="absolute top-0 left-0 w-full h-full object-cover"
+        className="absolute top-0 left-0 w-full h-full object-cover z-0"
         src="/videoplayback.mp4"
         autoPlay
         loop
