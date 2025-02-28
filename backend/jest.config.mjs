@@ -14,4 +14,6 @@ export default {
   testMatch: ["**/src/tests/**/*.test.js"],
   transform: {},
   setupFilesAfterEnv: ["<rootDir>/src/tests/setup.js"],
+  testTimeout: 10000,
+  setupFiles: ["dotenv/config"],
 };

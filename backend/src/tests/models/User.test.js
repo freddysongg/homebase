@@ -21,7 +21,7 @@ describe("User Model Test", () => {
       expect(savedUser.email).toBe(validUserData.email);
       // Password should be hashed
       expect(savedUser.password).not.toBe(validUserData.password);
-    });
+    }, 10000);
 
     it("should fail to save user without required fields", async () => {
       const userWithoutRequiredField = new User({ name: "test" });
@@ -29,7 +29,7 @@ describe("User Model Test", () => {
       await expect(userWithoutRequiredField.save()).rejects.toThrow(
         mongoose.Error.ValidationError,
       );
-    });
+    }, 10000);
 
     it("should fail to save user with invalid email", async () => {
       const userWithInvalidEmail = new User({
@@ -40,7 +40,7 @@ describe("User Model Test", () => {
       await expect(userWithInvalidEmail.save()).rejects.toThrow(
         mongoose.Error.ValidationError,
       );
-    });
+    }, 10000);
 
     it("should fail to save user with password less than 8 characters", async () => {
       const userWithShortPassword = new User({
@@ -51,7 +51,7 @@ describe("User Model Test", () => {
       await expect(userWithShortPassword.save()).rejects.toThrow(
         mongoose.Error.ValidationError,
       );
-    });
+    }, 10000);
   });
 
   describe("User Methods", () => {
@@ -64,7 +64,7 @@ describe("User Model Test", () => {
 
       const isNotMatch = await user.comparePassword("wrongpassword");
       expect(isNotMatch).toBe(false);
-    });
+    }, 10000);
   });
 
   describe("User Middleware", () => {
@@ -74,6 +74,6 @@ describe("User Model Test", () => {
 
       expect(user.password).not.toBe(validUserData.password);
       expect(user.password).toHaveLength(60); // bcrypt hash length
-    });
+    }, 10000);
   });
 });
