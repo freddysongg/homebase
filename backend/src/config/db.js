@@ -1,26 +1,29 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const connectDB = async () => {
+const isTest = process.env.NODE_ENV === "test";
+
+export const connectDB = async () => {
+  // Skip connection if we're in test environment (handled by setup.js)
+  if (isTest) return;
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    const uri = process.env.MONGO_URI;
+    await mongoose.connect(uri);
+    console.log("MongoDB Connected...");
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error("MongoDB connection error:", error.message);
     process.exit(1);
   }
 };
 
-const disconnectDB = async () => {
+export const disconnectDB = async () => {
   try {
-    await mongoose.connection.close();
-    console.log('MongoDB connection closed');
+    await mongoose.disconnect();
   } catch (error) {
-    console.error(`Error closing connection: ${error.message}`);
-    process.exit(1);
+    console.error("MongoDB disconnection error:", error.message);
+    throw error;
   }
 };
-
-export { connectDB, disconnectDB };

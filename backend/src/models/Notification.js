@@ -1,39 +1,36 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
-    required: [true, 'Notification type is required'],
-    enum: ['chore reminder', 'expense due', 'task reminder', 'general']
+    required: true,
+    enum: ["chore reminder", "expense update", "household task", "general"],
   },
   message: {
     type: String,
-    required: [true, 'Message is required'],
-    trim: true
+    required: true,
   },
-  recipient_ids: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'At least one recipient is required']
-  }],
+  recipient_ids: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  ],
   timestamp: {
     type: Date,
-    required: [true, 'Timestamp is required'],
-    default: Date.now
+    default: Date.now,
   },
   read_status: {
     type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
+    default: false,
+  },
 });
 
-// Indexes for frequently queried fields
-notificationSchema.index({ type: 1 });
-notificationSchema.index({ 'recipient_ids': 1 });
-notificationSchema.index({ timestamp: 1 });
+// Add markAsRead method to the schema
+notificationSchema.methods.markAsRead = function () {
+  this.read_status = true;
+};
 
-const Notification = mongoose.model('Notification', notificationSchema);
-
+const Notification = mongoose.model("Notification", notificationSchema);
 export default Notification;

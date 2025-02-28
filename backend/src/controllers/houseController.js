@@ -1,4 +1,4 @@
-import House from '../src/models/House.js';
+import House from "../src/models/House.js";
 
 // @desc    Create a new house
 // @route   POST /api/houses
@@ -31,7 +31,9 @@ const getHouse = async (req, res) => {
   try {
     const house = await House.findById(req.params.id);
     if (!house) {
-      return res.status(404).json({ success: false, message: 'House not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "House not found" });
     }
     res.status(200).json({ success: true, data: house });
   } catch (error) {
@@ -50,7 +52,9 @@ const updateHouse = async (req, res) => {
     });
 
     if (!house) {
-      return res.status(404).json({ success: false, message: 'House not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "House not found" });
     }
 
     res.status(200).json({ success: true, data: house });
@@ -66,9 +70,11 @@ const deleteHouse = async (req, res) => {
   try {
     const house = await House.findByIdAndDelete(req.params.id);
     if (!house) {
-      return res.status(404).json({ success: false, message: 'House not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "House not found" });
     }
-    res.status(200).json({ success: true, message: 'House deleted' });
+    res.status(200).json({ success: true, message: "House deleted" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

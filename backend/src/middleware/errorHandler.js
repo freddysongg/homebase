@@ -1,10 +1,10 @@
-import { logger } from '../utils/logger.js';
+import { logger } from "../utils/logger.js";
 
 class AppError extends Error {
   constructor(message, statusCode) {
     super(message);
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);
@@ -13,33 +13,33 @@ class AppError extends Error {
 
 const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  err.status = err.status || "error";
 
-  if (process.env.NODE_ENV === 'development') {
-    logger.error('Error 💥', err);
-    
+  if (process.env.NODE_ENV === "development") {
+    logger.error("Error 💥", err);
+
     res.status(err.statusCode).json({
       status: err.status,
       error: err,
       message: err.message,
-      stack: err.stack
+      stack: err.stack,
     });
   } else {
     // Production error response
     if (err.isOperational) {
       res.status(err.statusCode).json({
         status: err.status,
-        message: err.message
+        message: err.message,
       });
     } else {
-      logger.error('ERROR 💥', err);
-      
+      logger.error("ERROR 💥", err);
+
       res.status(500).json({
-        status: 'error',
-        message: 'Something went wrong!'
+        status: "error",
+        message: "Something went wrong!",
       });
     }
   }
 };
 
-export { AppError, errorHandler }; 
+export { AppError, errorHandler };

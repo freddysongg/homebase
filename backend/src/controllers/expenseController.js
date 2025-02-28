@@ -1,4 +1,4 @@
-import Expense from '../src/models/Expense.js';
+import Expense from "../src/models/Expense.js";
 
 // @desc    Create a new expense
 // @route   POST /api/expenses
@@ -17,8 +17,12 @@ const createExpense = async (req, res) => {
 // @access  Public
 const getExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find().populate('paid_by').populate('split_among.user');
-    res.status(200).json({ success: true, count: expenses.length, data: expenses });
+    const expenses = await Expense.find()
+      .populate("paid_by")
+      .populate("split_among.user");
+    res
+      .status(200)
+      .json({ success: true, count: expenses.length, data: expenses });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -29,9 +33,13 @@ const getExpenses = async (req, res) => {
 // @access  Public
 const getExpense = async (req, res) => {
   try {
-    const expense = await Expense.findById(req.params.id).populate('paid_by').populate('split_among.user');
+    const expense = await Expense.findById(req.params.id)
+      .populate("paid_by")
+      .populate("split_among.user");
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
     res.status(200).json({ success: true, data: expense });
   } catch (error) {
@@ -47,10 +55,14 @@ const updateExpense = async (req, res) => {
     const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
       new: true, // Return updated document
       runValidators: true,
-    }).populate('paid_by').populate('split_among.user');
+    })
+      .populate("paid_by")
+      .populate("split_among.user");
 
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
 
     res.status(200).json({ success: true, data: expense });
@@ -66,9 +78,11 @@ const deleteExpense = async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
-    res.status(200).json({ success: true, message: 'Expense deleted' });
+    res.status(200).json({ success: true, message: "Expense deleted" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

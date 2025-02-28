@@ -1,4 +1,4 @@
-import Chore from '../models/Chore.js';
+import Chore from "../models/Chore.js";
 
 // @desc    Create a new chore
 // @route   POST /api/chores
@@ -8,12 +8,12 @@ const createChore = async (req, res) => {
     const chore = await Chore.create(req.body);
     res.status(201).json({
       success: true,
-      data: chore
+      data: chore,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -23,16 +23,16 @@ const createChore = async (req, res) => {
 // @access  Public
 const getChores = async (req, res) => {
   try {
-    const chores = await Chore.find().populate('assigned_to');
+    const chores = await Chore.find().populate("assigned_to");
     res.status(200).json({
       success: true,
       count: chores.length,
-      data: chores
+      data: chores,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -42,21 +42,21 @@ const getChores = async (req, res) => {
 // @access  Public
 const getChore = async (req, res) => {
   try {
-    const chore = await Chore.findById(req.params.id).populate('assigned_to');
+    const chore = await Chore.findById(req.params.id).populate("assigned_to");
     if (!chore) {
       return res.status(404).json({
         success: false,
-        message: 'Chore not found'
+        message: "Chore not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: chore
+      data: chore,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -68,22 +68,22 @@ const updateChore = async (req, res) => {
   try {
     const chore = await Chore.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-      runValidators: true
-    }).populate('assigned_to');
+      runValidators: true,
+    }).populate("assigned_to");
     if (!chore) {
       return res.status(404).json({
         success: false,
-        message: 'Chore not found'
+        message: "Chore not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: chore
+      data: chore,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -97,17 +97,17 @@ const deleteChore = async (req, res) => {
     if (!chore) {
       return res.status(404).json({
         success: false,
-        message: 'Chore not found'
+        message: "Chore not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: {}
+      data: {},
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };

@@ -1,6 +1,6 @@
-import User from '../src/models/User.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken'; 
+import User from "../src/models/User.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // @desc    Authenticate user
 // @route   POST /api/login
@@ -14,7 +14,7 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid credentials',
+        message: "Invalid credentials",
       });
     }
 
@@ -23,13 +23,13 @@ const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid credentials',
+        message: "Invalid credentials",
       });
     }
 
     // Generate JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '30d', // Token expires in 30 days
+      expiresIn: "30d", // Token expires in 30 days
     });
 
     res.status(200).json({

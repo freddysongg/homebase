@@ -1,13 +1,13 @@
-import rateLimit from 'express-rate-limit';
-import helmet from 'helmet';
-import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
-import hpp from 'hpp';
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import hpp from "hpp";
 
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
-  message: 'Too many requests from this IP, please try again in an hour!'
+  message: "Too many requests from this IP, please try again in an hour!",
 });
 
 const securityMiddleware = (app) => {
@@ -15,7 +15,7 @@ const securityMiddleware = (app) => {
   app.use(helmet());
 
   // Rate limiting
-  app.use('/api', limiter);
+  app.use("/api", limiter);
 
   // Data sanitization against NoSQL query injection
   app.use(mongoSanitize());
@@ -27,4 +27,4 @@ const securityMiddleware = (app) => {
   app.use(hpp());
 };
 
-export { securityMiddleware }; 
+export { securityMiddleware };

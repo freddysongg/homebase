@@ -1,4 +1,4 @@
-import HouseholdTask from '../models/HouseholdTask.js';
+import HouseholdTask from "../models/HouseholdTask.js";
 
 // @desc    Create a new household task
 // @route   POST /api/household-tasks
@@ -8,12 +8,12 @@ const createHouseholdTask = async (req, res) => {
     const householdTask = await HouseholdTask.create(req.body);
     res.status(201).json({
       success: true,
-      data: householdTask
+      data: householdTask,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -23,16 +23,16 @@ const createHouseholdTask = async (req, res) => {
 // @access  Public
 const getHouseholdTasks = async (req, res) => {
   try {
-    const householdTasks = await HouseholdTask.find().populate('assigned_to');
+    const householdTasks = await HouseholdTask.find().populate("assigned_to");
     res.status(200).json({
       success: true,
       count: householdTasks.length,
-      data: householdTasks
+      data: householdTasks,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -42,21 +42,23 @@ const getHouseholdTasks = async (req, res) => {
 // @access  Public
 const getHouseholdTask = async (req, res) => {
   try {
-    const householdTask = await HouseholdTask.findById(req.params.id).populate('assigned_to');
+    const householdTask = await HouseholdTask.findById(req.params.id).populate(
+      "assigned_to",
+    );
     if (!householdTask) {
       return res.status(404).json({
         success: false,
-        message: 'Household task not found'
+        message: "Household task not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: householdTask
+      data: householdTask,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -66,24 +68,28 @@ const getHouseholdTask = async (req, res) => {
 // @access  Public
 const updateHouseholdTask = async (req, res) => {
   try {
-    const householdTask = await HouseholdTask.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    }).populate('assigned_to');
+    const householdTask = await HouseholdTask.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).populate("assigned_to");
     if (!householdTask) {
       return res.status(404).json({
         success: false,
-        message: 'Household task not found'
+        message: "Household task not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: householdTask
+      data: householdTask,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -97,17 +103,17 @@ const deleteHouseholdTask = async (req, res) => {
     if (!householdTask) {
       return res.status(404).json({
         success: false,
-        message: 'Household task not found'
+        message: "Household task not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: {}
+      data: {},
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -117,5 +123,5 @@ export {
   getHouseholdTasks,
   getHouseholdTask,
   updateHouseholdTask,
-  deleteHouseholdTask
+  deleteHouseholdTask,
 };

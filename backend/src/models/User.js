@@ -1,70 +1,75 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Name is required'],
-    trim: true
-  },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters long']
-  },
-  phone: {
-    type: String,
-    trim: true
-  },
-  preferences: {
-    notifications: {
-      type: Boolean,
-      default: true
-    },
-    reminder_times: [{
+const userSchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
-      match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9] (AM|PM)$/, 'Please use 12-hour format (e.g., "8:00 AM")']
-    }]
-  },
-  chore_history: [{
-    chore_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Chore'
+      required: true,
     },
-    status: {
+    email: {
       type: String,
-      enum: ['completed', 'pending'],
-      default: 'pending'
-    }
-  }],
-  expense_contributions: [{
-    expense_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Expense'
+      required: true,
+      unique: true,
+      validate: {
+        validator: function (v) {
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid email address!`,
+      },
     },
-    amount_paid: {
-      type: Number,
-      min: 0
-    }
-  }]
-}, {
-  timestamps: true
-});
-
-// Index for notifications preference
-userSchema.index({ 'preferences.notifications': 1 });
+    password: {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v.length >= 8;
+        },
+        message: "Password must be at least 8 characters long",
+      },
+    },
+    household_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Household",
+    },
+    role: {
+      type: String,
+      enum: ["member", "admin"],
+      default: "member",
+    },
+    preferences: {
+      notifications: {
+        type: Boolean,
+        default: true,
+      },
+      reminder_times: [
+        {
+          type: String,
+        },
+      ],
+    },
+    chore_history: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Chore",
+      },
+    ],
+    expense_contributions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Expense",
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -74,13 +79,9 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Generate JWT token
-userSchema.methods.generateAuthToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: '30d', // Token expires in 30 days
-  });
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
-
+const User = mongoose.model("User", userSchema);
 export default User;
