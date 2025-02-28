@@ -5,68 +5,59 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, "Name is required"],
+      trim: true,
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
-      validate: {
-        validator: function (v) {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid email address!`,
-      },
+      trim: true,
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
-      required: true,
-      validate: {
-        validator: function (v) {
-          return v.length >= 8;
-        },
-        message: "Password must be at least 8 characters long",
-      },
+      required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
+    },
+    role: {
+      type: String,
+      enum: ["admin", "member"],
+      default: "member",
     },
     household_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Household",
-    },
-    role: {
-      type: String,
-      enum: ["member", "admin"],
-      default: "member",
+      required: [true, "Household ID is required"],
     },
     preferences: {
       notifications: {
-        type: Boolean,
-        default: true,
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: true },
+        inApp: { type: Boolean, default: true },
       },
-      reminder_times: [
-        {
-          type: String,
-        },
-      ],
+      theme: {
+        type: String,
+        enum: ["light", "dark", "system"],
+        default: "system",
+      },
     },
-    chore_history: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Chore",
-      },
-    ],
-    expense_contributions: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Expense",
-      },
-    ],
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    lastActive: Date,
   },
   {
     timestamps: true,
   },
 );
 
-// Hash password before saving
+// Password hashing middleware
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -79,9 +70,21 @@ userSchema.pre("save", async function (next) {
   }
 });
 
+// Password comparison method
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update last active timestamp
+userSchema.methods.updateLastActive = async function () {
+  this.lastActive = new Date();
+  return this.save();
 };
 
 const User = mongoose.model("User", userSchema);
+
 export default User;

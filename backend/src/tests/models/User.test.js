@@ -9,6 +9,14 @@ describe("User Model Test", () => {
     password: "Password123!",
     household_id: new mongoose.Types.ObjectId(),
     role: "member",
+    preferences: {
+      notifications: {
+        email: true,
+        push: true,
+        inApp: true,
+      },
+      theme: "system",
+    },
   };
 
   describe("User Validation", () => {
@@ -19,8 +27,10 @@ describe("User Model Test", () => {
       expect(savedUser._id).toBeDefined();
       expect(savedUser.name).toBe(validUserData.name);
       expect(savedUser.email).toBe(validUserData.email);
-      // Password should be hashed
       expect(savedUser.password).not.toBe(validUserData.password);
+      expect(savedUser.role).toBe("member");
+      expect(savedUser.isEmailVerified).toBe(false);
+      expect(savedUser.preferences.theme).toBe("system");
     }, 10000);
 
     it("should fail to save user without required fields", async () => {
@@ -52,6 +62,31 @@ describe("User Model Test", () => {
         mongoose.Error.ValidationError,
       );
     }, 10000);
+
+    it("should fail to save user with invalid role", async () => {
+      const userWithInvalidRole = new User({
+        ...validUserData,
+        role: "invalid_role",
+      });
+
+      await expect(userWithInvalidRole.save()).rejects.toThrow(
+        mongoose.Error.ValidationError,
+      );
+    }, 10000);
+
+    it("should fail to save user with invalid theme", async () => {
+      const userWithInvalidTheme = new User({
+        ...validUserData,
+        preferences: {
+          ...validUserData.preferences,
+          theme: "invalid_theme",
+        },
+      });
+
+      await expect(userWithInvalidTheme.save()).rejects.toThrow(
+        mongoose.Error.ValidationError,
+      );
+    }, 10000);
   });
 
   describe("User Methods", () => {
@@ -64,6 +99,17 @@ describe("User Model Test", () => {
 
       const isNotMatch = await user.comparePassword("wrongpassword");
       expect(isNotMatch).toBe(false);
+    }, 10000);
+
+    it("should update lastActive timestamp", async () => {
+      const user = new User(validUserData);
+      await user.save();
+
+      const oldLastActive = user.lastActive;
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+      await user.updateLastActive();
+
+      expect(user.lastActive).not.toEqual(oldLastActive);
     }, 10000);
   });
 
