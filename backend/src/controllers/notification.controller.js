@@ -2,33 +2,44 @@ import Notification from "@models/Notification.js";
 import { sendEmail } from "@utils/email.js";
 import { sendPushNotification } from "@utils/push.js";
 
-export const createNotification = async (req, res) => {
+export const createNotification = async (notificationData) => {
   try {
-    const notification = await Notification.create(req.body);
+    // Handle both direct function calls and API requests
+    const data = notificationData.body || notificationData;
 
-    // Initialize read status for all recipients
-    notification.recipient_ids.forEach((recipientId) => {
-      notification.read_status.set(recipientId.toString(), false);
-    });
-    await notification.save();
-
-    // Handle different delivery methods
-    if (notification.delivery_methods.email) {
-      await sendEmail(notification);
-    }
-    if (notification.delivery_methods.push) {
-      await sendPushNotification(notification);
+    // Validate required fields
+    if (
+      !data.type ||
+      !data.recipient_ids ||
+      !data.title ||
+      !data.message ||
+      !data.reference
+    ) {
+      throw new Error("Missing required notification fields");
     }
 
-    res.status(201).json({
-      success: true,
-      data: notification,
+    const notification = await Notification.create({
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      recipient_ids: data.recipient_ids,
+      reference: data.reference,
+      status: data.status || "unread",
     });
+
+    // Handle delivery methods if specified
+    if (data.delivery_methods) {
+      if (data.delivery_methods.email) {
+        await sendEmail(notification);
+      }
+      if (data.delivery_methods.push) {
+        await sendPushNotification(notification);
+      }
+    }
+
+    return notification;
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    throw error;
   }
 };
 

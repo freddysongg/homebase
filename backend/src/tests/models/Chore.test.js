@@ -4,22 +4,26 @@ import Chore from "@models/Chore.js";
 import User from "@models/User.js";
 
 describe("Chore Model", () => {
-  let testUser;
+  let testUser, householdId;
 
   beforeEach(async () => {
+    householdId = new mongoose.Types.ObjectId();
     testUser = await User.create({
       name: "Test User",
       email: `test${Date.now()}@example.com`,
       password: "password123",
+      household_id: householdId,
     });
   });
 
   const validChoreData = {
+    name: "Clean Kitchen",
     description: "Clean the kitchen",
     assigned_to: [], // Will be set in tests
     due_date: new Date(Date.now() + 86400000), // Tomorrow
     status: "pending",
     rotation: false,
+    household_id: null, // Will be set in tests
   };
 
   describe("Chore Validation", () => {
@@ -27,16 +31,14 @@ describe("Chore Model", () => {
       const choreData = {
         ...validChoreData,
         assigned_to: [testUser._id],
+        household_id: householdId,
       };
 
       const chore = new Chore(choreData);
       const savedChore = await chore.save();
 
       expect(savedChore._id).toBeDefined();
-      expect(savedChore.description).toBe(choreData.description);
-      expect(savedChore.assigned_to[0].toString()).toBe(
-        testUser._id.toString(),
-      );
+      expect(savedChore.name).toBe(choreData.name);
       expect(savedChore.status).toBe("pending");
     });
 

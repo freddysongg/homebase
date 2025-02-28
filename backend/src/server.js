@@ -1,7 +1,6 @@
-import express from "express";
+import { app } from "./app.js";
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
-import cors from "cors";
 import { createUser, getUsers, getUser } from "./controllers/userController.js";
 import {
   createChore,
@@ -24,19 +23,28 @@ import {
   getExpenses,
   updateExpense,
 } from "./controllers/expenseController.js";
+import userRoutes from "@routes/user.routes.js";
+import notificationRoutes from "@routes/notification.routes.js";
+import pushSubscriptionRoutes from "@routes/pushSubscription.routes.js";
+import expenseRoutes from "@routes/expense.routes.js";
+import { processRecurringExpenses } from "@utils/scheduler.js";
 
 // Load environment variables
 dotenv.config();
 
-// Initialize Express app
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
 // Database connection
 connectDB();
+
+// Schedule recurring expense processing
+const SCHEDULER_INTERVAL =
+  process.env.NODE_ENV === "production"
+    ? 24 * 60 * 60 * 1000 // Daily in production
+    : 5 * 60 * 1000; // Every 5 minutes in development
+
+setInterval(async () => {
+  console.log("Processing recurring expenses...");
+  await processRecurringExpenses();
+}, SCHEDULER_INTERVAL);
 
 // Routes
 
@@ -67,6 +75,18 @@ app.get("api/expense", getExpenses);
 app.get("api/expense/:id", getExpense);
 app.put("api/expense/:id", updateExpense);
 app.delete("api/expense/:id", deleteExpense);
+
+//user routes
+app.use("/api/users", userRoutes);
+
+//notification routes
+app.use("/api/notifications", notificationRoutes);
+
+//push subscription routes
+app.use("/api/push-subscriptions", pushSubscriptionRoutes);
+
+//expense routes
+app.use("/api/expenses", expenseRoutes);
 
 // Basic route for health check
 app.get("/", (req, res) => {

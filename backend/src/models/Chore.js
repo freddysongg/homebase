@@ -2,39 +2,36 @@ import mongoose from "mongoose";
 
 const choreSchema = new mongoose.Schema(
   {
-    description: {
+    name: {
       type: String,
-      required: [true, "Description is required"],
+      required: [true, "Chore name is required"],
       trim: true,
     },
-    assigned_to: {
-      type: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-      ],
-      required: [true, "At least one user must be assigned"],
-      validate: {
-        validator: function (v) {
-          return Array.isArray(v) && v.length > 0;
-        },
-        message: "At least one user must be assigned",
+    description: String,
+    assigned_to: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: [true, "Assigned user is required"],
       },
+    ],
+    household_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, "Household ID is required"],
     },
     due_date: {
       type: Date,
       required: [true, "Due date is required"],
       validate: {
-        validator: function (value) {
-          return value > new Date();
+        validator: function (date) {
+          return date > new Date();
         },
         message: "Due date must be in the future",
       },
     },
     status: {
       type: String,
-      enum: ["completed", "pending"],
+      enum: ["pending", "in-progress", "completed"],
       default: "pending",
     },
     rotation: {
