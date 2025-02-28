@@ -1,4 +1,4 @@
-import Expense from '../models/Expense.js';
+import Expense from '../src/models/Expense.js';
 
 // @desc    Create a new expense
 // @route   POST /api/expenses

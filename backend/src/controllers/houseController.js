@@ -1,4 +1,4 @@
-import House from '../models/House.js';
+import House from '../src/models/House.js';
 
 // @desc    Create a new house
 // @route   POST /api/houses
