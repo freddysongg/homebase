@@ -1,7 +1,6 @@
-import Expense from "@models/Expense.js";
+import Expense from "../models/Expense.js";
 import { createNotification } from "../controllers/notification.controller.js";
-import { getHouseholdMembers } from "@utils/household.js";
-import { processRecurringExpenses } from "@utils/scheduler.js";
+import { getHouseholdMembers } from "../utils/household.js";
 
 export const createExpense = async (req, res) => {
   try {

@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "@middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 import {
   createExpense,
   getExpenses,
@@ -8,7 +8,7 @@ import {
   deleteExpense,
   getRecurringExpenses,
   toggleRecurring,
-} from "@controllers/expense.controller.js";
+} from "../controllers/expense.controller.js";
 
 const router = express.Router();
 

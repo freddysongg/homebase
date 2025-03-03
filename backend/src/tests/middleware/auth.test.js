@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { protect, authorize } from "@middleware/auth.js";
-import User from "@models/User.js";
+import { protect, authorize } from "../../middleware/auth.js";
+import User from "../../models/User.js";
 
 describe("Auth Middleware", () => {
   let mockReq;

@@ -1,14 +1,23 @@
-import House from "../src/models/House.js";
+import House from "../models/House.js";
 
 // @desc    Create a new house
 // @route   POST /api/houses
 // @access  Public
 const createHouse = async (req, res) => {
   try {
-    const house = await House.create(req.body);
-    res.status(201).json({ success: true, data: house });
+    const house = await House.create({
+      ...req.body,
+      created_by: req.user._id,
+    });
+    res.status(201).json({
+      success: true,
+      data: house,
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -31,13 +40,20 @@ const getHouse = async (req, res) => {
   try {
     const house = await House.findById(req.params.id);
     if (!house) {
-      return res
-        .status(404)
-        .json({ success: false, message: "House not found" });
+      return res.status(404).json({
+        success: false,
+        message: "House not found",
+      });
     }
-    res.status(200).json({ success: true, data: house });
+    res.status(200).json({
+      success: true,
+      data: house,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -47,19 +63,24 @@ const getHouse = async (req, res) => {
 const updateHouse = async (req, res) => {
   try {
     const house = await House.findByIdAndUpdate(req.params.id, req.body, {
-      new: true, // Return updated document
+      new: true,
       runValidators: true,
     });
-
     if (!house) {
-      return res
-        .status(404)
-        .json({ success: false, message: "House not found" });
+      return res.status(404).json({
+        success: false,
+        message: "House not found",
+      });
     }
-
-    res.status(200).json({ success: true, data: house });
+    res.status(200).json({
+      success: true,
+      data: house,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -68,15 +89,23 @@ const updateHouse = async (req, res) => {
 // @access  Public
 const deleteHouse = async (req, res) => {
   try {
-    const house = await House.findByIdAndDelete(req.params.id);
+    const house = await House.findById(req.params.id);
     if (!house) {
-      return res
-        .status(404)
-        .json({ success: false, message: "House not found" });
+      return res.status(404).json({
+        success: false,
+        message: "House not found",
+      });
     }
-    res.status(200).json({ success: true, message: "House deleted" });
+    await house.remove();
+    res.status(200).json({
+      success: true,
+      message: "House deleted successfully",
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

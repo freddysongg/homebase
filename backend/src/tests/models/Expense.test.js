@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
-import Expense from "@models/Expense.js";
-import User from "@models/User.js";
+import Expense from "../../models/Expense.js";
+import User from "../../models/User.js";
 
 describe("Expense Model", () => {
   let testUser1, testUser2, householdId;

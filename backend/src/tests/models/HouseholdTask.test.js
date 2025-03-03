@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
-import HouseholdTask from "@models/HouseholdTask.js";
-import User from "@models/User.js";
+import HouseholdTask from "../../models/HouseholdTask.js";
+import User from "../../models/User.js";
 
 describe("HouseholdTask Model", () => {
   let testUser, householdId;

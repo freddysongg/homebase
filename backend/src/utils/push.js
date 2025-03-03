@@ -1,15 +1,35 @@
 import webpush from "web-push";
-import PushSubscription from "@models/PushSubscription.js";
+import PushSubscription from "../models/PushSubscription.js";
 
 // Configure web-push with your VAPID keys
-webpush.setVapidDetails(
-  process.env.WEB_PUSH_CONTACT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
-);
+if (
+  process.env.WEB_PUSH_CONTACT &&
+  process.env.VAPID_PUBLIC_KEY &&
+  process.env.VAPID_PRIVATE_KEY
+) {
+  webpush.setVapidDetails(
+    process.env.WEB_PUSH_CONTACT,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY,
+  );
+} else {
+  console.warn(
+    "Web Push VAPID details not configured. Push notifications will not work.",
+  );
+}
 
 export const sendPushNotification = async (notification) => {
   try {
+    // Skip if web push is not configured
+    if (
+      !process.env.WEB_PUSH_CONTACT ||
+      !process.env.VAPID_PUBLIC_KEY ||
+      !process.env.VAPID_PRIVATE_KEY
+    ) {
+      console.warn("Skipping push notification - VAPID not configured");
+      return;
+    }
+
     // Get subscription objects for each recipient
     const subscriptions = await getPushSubscriptions(
       notification.recipient_ids,

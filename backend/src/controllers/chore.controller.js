@@ -1,11 +1,32 @@
 import Chore from "../models/Chore.js";
+import { createNotification } from "./notification.controller.js";
 
 // @desc    Create a new chore
 // @route   POST /api/chores
 // @access  Public
 const createChore = async (req, res) => {
   try {
-    const chore = await Chore.create(req.body);
+    const chore = await Chore.create({
+      ...req.body,
+      household_id: req.user.household_id,
+    });
+
+    // Create notifications for assigned users
+    await Promise.all(
+      chore.assigned_to.map((userId) =>
+        createNotification({
+          type: "chore_assigned",
+          title: "New Chore Assigned",
+          message: `You have been assigned to ${chore.name}`,
+          recipient_ids: [userId],
+          reference: {
+            model: "Chore",
+            id: chore._id,
+          },
+        }),
+      ),
+    );
+
     res.status(201).json({
       success: true,
       data: chore,
@@ -23,14 +44,13 @@ const createChore = async (req, res) => {
 // @access  Public
 const getChores = async (req, res) => {
   try {
-    const chores = await Chore.find().populate("assigned_to");
+    const chores = await Chore.find({ household_id: req.user.household_id });
     res.status(200).json({
       success: true,
-      count: chores.length,
       data: chores,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
@@ -42,7 +62,7 @@ const getChores = async (req, res) => {
 // @access  Public
 const getChore = async (req, res) => {
   try {
-    const chore = await Chore.findById(req.params.id).populate("assigned_to");
+    const chore = await Chore.findById(req.params.id);
     if (!chore) {
       return res.status(404).json({
         success: false,
@@ -54,7 +74,7 @@ const getChore = async (req, res) => {
       data: chore,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
@@ -69,7 +89,7 @@ const updateChore = async (req, res) => {
     const chore = await Chore.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).populate("assigned_to");
+    });
     if (!chore) {
       return res.status(404).json({
         success: false,
@@ -93,19 +113,20 @@ const updateChore = async (req, res) => {
 // @access  Public
 const deleteChore = async (req, res) => {
   try {
-    const chore = await Chore.findByIdAndDelete(req.params.id);
+    const chore = await Chore.findById(req.params.id);
     if (!chore) {
       return res.status(404).json({
         success: false,
         message: "Chore not found",
       });
     }
+    await chore.remove();
     res.status(200).json({
       success: true,
-      data: {},
+      message: "Chore deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });

@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import expenseRoutes from "@routes/expense.routes.js";
-import { protect } from "@middleware/auth.js";
+import expenseRoutes from "../routes/expense.routes.js";
+import { protect } from "../middleware/auth.js";
 
 const app = express();
 

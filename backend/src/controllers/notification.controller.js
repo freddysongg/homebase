@@ -1,6 +1,5 @@
-import Notification from "@models/Notification.js";
-import { sendEmail } from "@utils/email.js";
-import { sendPushNotification } from "@utils/push.js";
+import Notification from "../models/Notification.js";
+import { sendEmail } from "../utils/email.js";
 
 export const createNotification = async (notificationData) => {
   try {
@@ -31,9 +30,6 @@ export const createNotification = async (notificationData) => {
     if (data.delivery_methods) {
       if (data.delivery_methods.email) {
         await sendEmail(notification);
-      }
-      if (data.delivery_methods.push) {
-        await sendPushNotification(notification);
       }
     }
 

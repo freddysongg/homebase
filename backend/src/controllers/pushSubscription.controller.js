@@ -1,4 +1,4 @@
-import PushSubscription from "@models/PushSubscription.js";
+import PushSubscription from "../models/PushSubscription.js";
 
 export const subscribe = async (req, res) => {
   try {

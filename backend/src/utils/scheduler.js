@@ -1,5 +1,5 @@
-import Expense from "@models/Expense.js";
-import { createNotification } from "@controllers/notification.controller.js";
+import Expense from "../models/Expense.js";
+import { createNotification } from "../controllers/notification.controller.js";
 
 export const processRecurringExpenses = async () => {
   try {

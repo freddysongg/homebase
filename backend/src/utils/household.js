@@ -1,5 +1,5 @@
-import Household from "@models/Household.js";
-import User from "@models/User.js";
+import Household from "../models/Household.js";
+import User from "../models/User.js";
 
 export const getHouseholdMembers = async (householdId) => {
   const users = await User.find({ household_id: householdId });

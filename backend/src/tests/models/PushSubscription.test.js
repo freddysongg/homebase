@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
-import PushSubscription from "@models/PushSubscription.js";
-import User from "@models/User.js";
+import PushSubscription from "../../models/PushSubscription.js";
+import User from "../../models/User.js";
 
 describe("PushSubscription Model", () => {
   let testUser;

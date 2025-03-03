@@ -1,10 +1,10 @@
 import express from "express";
-import { protect } from "@middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 import {
   subscribe,
   unsubscribe,
   getUserSubscriptions,
-} from "@controllers/pushSubscription.controller.js";
+} from "../controllers/pushSubscription.controller.js";
 
 const router = express.Router();
 

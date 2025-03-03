@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
-import Notification from "@models/Notification.js";
-import User from "@models/User.js";
-import Expense from "@models/Expense.js";
+import Notification from "../../models/Notification.js";
+import User from "../../models/User.js";
+import Expense from "../../models/Expense.js";
 
 describe("Notification Model", () => {
   let testUser, testExpense;

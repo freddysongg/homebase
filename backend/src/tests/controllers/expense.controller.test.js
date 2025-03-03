@@ -2,10 +2,10 @@ import { jest } from "@jest/globals";
 import mongoose from "mongoose";
 import request from "supertest";
 import { app } from "../testApp.js";
-import User from "@models/User.js";
-import Expense from "@models/Expense.js";
+import User from "../../models/User.js";
+import Expense from "../../models/Expense.js";
 import jwt from "jsonwebtoken";
-import { createNotification } from "@controllers/notification.controller.js";
+import { createNotification } from "../../controllers/notification.controller.js";
 
 // Mock the notification controller
 jest.mock("@controllers/notification.controller.js");

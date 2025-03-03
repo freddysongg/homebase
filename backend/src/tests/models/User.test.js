@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
-import User from "@models/User.js";
+import User from "../../models/User.js";
 
 describe("User Model Test", () => {
   const validUserData = {
