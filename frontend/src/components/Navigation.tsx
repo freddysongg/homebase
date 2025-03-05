@@ -47,7 +47,7 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-16">
           {isLoggedIn && (
             <>
-              <Link href="/expense" className="hover:text-blue-400 transition">
+              <Link href="/homes" className="hover:text-blue-400 transition">
                 Homes
               </Link>
               <Link href="/expense" className="hover:text-blue-400 transition">
@@ -56,8 +56,8 @@ const Navbar: React.FC = () => {
               <Link href="/chore" className="hover:text-blue-400 transition">
                 Chores
               </Link>
-              <Link href="/tasks" className="hover:text-blue-400 transition">
-                Tasks
+              <Link href="/usettings" className="hover:text-blue-400 transition">
+                Settings
               </Link>
             </>
           )}

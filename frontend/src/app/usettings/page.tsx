@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Tasks from '@/components/tasks/Tasks';
+import Settings from '@/components/usettings/Settings';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function TasksPage() {
 
   return (
     <div>
-      <Tasks />
+      <Settings />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 const members = ['User1', 'User2', 'User3'];
 
@@ -24,4 +24,4 @@ function page() {
   );
 }
 
-export default page
+export default page;
