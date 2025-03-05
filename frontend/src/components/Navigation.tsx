@@ -48,6 +48,9 @@ const Navbar: React.FC = () => {
           {isLoggedIn && (
             <>
               <Link href="/expense" className="hover:text-blue-400 transition">
+                Homes
+              </Link>
+              <Link href="/expense" className="hover:text-blue-400 transition">
                 Expenses
               </Link>
               <Link href="/chore" className="hover:text-blue-400 transition">
