@@ -2,24 +2,30 @@
 
 import React, { useState } from 'react';
 
+const generateHomeCode = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
+
 const Homes = () => {
-  const [homeCode, setHomeCode] = useState('');
   const [homeName, setHomeName] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
+  const [homeCode, setHomeCode] = useState(generateHomeCode());
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState('');
 
   const handleCreateHome = () => {
     setShowCreateForm(true);
     setSuccessMessage(null);
     setError(null);
+    setHomeCode(generateHomeCode());
   };
 
   const handleSubmitCreateHome = () => {
-    if (!homeName.trim() || !homeAddress.trim() || !homeCode.trim()) {
-      setError('All fields are required.');
+    if (!homeName.trim() || !homeAddress.trim()) {
+      setError('Please enter a home name and address.');
       return;
     }
 
@@ -33,12 +39,12 @@ const Homes = () => {
       setShowCreateForm(false);
       setHomeName('');
       setHomeAddress('');
-      setHomeCode('');
+      setHomeCode(generateHomeCode());
     }, 1000);
   };
 
   const handleJoinHome = () => {
-    if (!homeCode.trim()) {
+    if (!joinCode.trim()) {
       setError('Please enter a valid home code.');
       return;
     }
@@ -66,7 +72,7 @@ const Homes = () => {
         <div className="flex flex-col space-y-4">
           <button
             onClick={handleCreateHome}
-            className="bg-black hover:bg-blue-600 px-6 py-3 rounded-md font-bold transition"
+            className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-md font-bold transition"
             disabled={isLoading}
           >
             {isLoading ? 'Processing...' : 'Create a New Home'}
@@ -77,8 +83,8 @@ const Homes = () => {
               type="text"
               placeholder="Enter home code"
               className="p-2 rounded-md text-black border border-gray-600 w-64"
-              value={homeCode}
-              onChange={(e) => setHomeCode(e.target.value)}
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
             />
             <button
               onClick={handleJoinHome}
@@ -117,13 +123,12 @@ const Homes = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Home Code (for invitations)</label>
+              <label className="block text-sm font-medium">Home ID</label>
               <input
                 type="text"
-                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 bg-gray-300 cursor-not-allowed"
                 value={homeCode}
-                onChange={(e) => setHomeCode(e.target.value)}
-                required
+                disabled
               />
             </div>
 

@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
   const router = useRouter(); // Initialize useRouter
 
@@ -16,34 +16,34 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
+
     try {
       console.log('Sending login request...');
       const response = await fetch(`http://localhost:5001/api/auth/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
-  
+
       console.log('Response status:', response.status);
       console.log('Response headers:', JSON.stringify([...response.headers]));
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error response data:', errorData);
         throw new Error(errorData.message || 'Login failed. Please try again.');
       }
-  
+
       const data = await response.json();
       console.log('Login successful:', data);
-  
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', data.token);
       }
-  
-      router.push('/');
+
+      router.push('/homes');
     } catch (error) {
       const err = error as Error; // Type assertion
       console.error('Login error:', err);
@@ -52,7 +52,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
 
   const handleGoogleSignIn = () => {
     alert('Feature coming soon');
