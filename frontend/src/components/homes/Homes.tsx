@@ -42,7 +42,7 @@ const Homes = () => {
       const decodedToken = jwtDecode(token) as { userId: string };
       const userId = decodedToken.userId;
 
-      const response = await fetch('http://localhost:5001/api/households', {
+      const createHomeResponse = await fetch('http://localhost:5001/api/households', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,14 +56,34 @@ const Homes = () => {
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!createHomeResponse.ok) {
+        const errorData = await createHomeResponse.json();
         throw new Error(errorData.message || 'Failed to create home.');
       }
-
-      const data = await response.json();
+  
+      const homeData = await createHomeResponse.json();
+      const homeId = homeData._id; // Get the newly created home's ID
+  
+      // Step 2: Update the user with the new home ID
+      const updateUserResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          homeId, // Add the home ID to the user's homeId field
+        }),
+      });
+  
+      if (!updateUserResponse.ok) {
+        const errorData = await updateUserResponse.json();
+        throw new Error(errorData.message || 'Failed to update user.');
+      }
+  
+      // Success
       setSuccessMessage(
-        `Home "${data.name}" created! Invite others using the code: ${data.homeCode}`
+        `Home "${homeData.name}" created! Invite others using the code: ${homeData.homeCode}`
       );
       setShowCreateForm(false);
       setHomeName('');
