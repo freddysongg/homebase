@@ -5,42 +5,54 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const Signup = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setLoading] = useState(false);
+  const router = useRouter(); // Initialize useRouter
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
+    setLoading(true);
+    setError('');
+  
     try {
-      const response = await fetch('http://localhost:5001/api/users', {
+      console.log('Sending registration request...');
+      const response = await fetch(`http://localhost:5001/api/auth/register`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email, password }),
       });
-
-      const data = await response.json();
-
+  
+      console.log('Response status:', response.status);
+  
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong during signup.');
+        const errorData = await response.json();
+        console.error('Error response data:', errorData);
+        throw new Error(errorData.message || 'Registration failed. Please try again.');
       }
-
-      console.log('Signup successful:', data);
-
-      // Redirect to login page after successful signup
+  
+      const data = await response.json();
+      console.log('Registration successful:', data);
+  
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', data.token);
+      }
+  
       router.push('/login');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during signup.');
-      console.error('Signup error:', err);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Registration error:', error);
+        setError(error.message || 'Registration failed. Please try again.');
+      } else {
+        console.error('Unknown error:', error);
+        setError('An unexpected error occurred.');
+      }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
