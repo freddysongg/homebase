@@ -126,9 +126,8 @@ const Expense: React.FC = () => {
       totalAmount: Number(totalAmount),
       paidBy,
       splitAmong: splitAmong.map((entry) => ({ ...entry, amount: Number(entry.amount) })),
-      status: 'pending',
+      status: 'pending'
     };
-    
 
     setExpenses([...expenses, newExpense]);
     setDescription('');
@@ -192,9 +191,7 @@ const Expense: React.FC = () => {
           </label>
         </div>
 
-        {errorMessage && (
-          <p className="text-red-500 text-sm font-bold mb-2">{errorMessage}</p>
-        )}
+        {errorMessage && <p className="text-red-500 text-sm font-bold mb-2">{errorMessage}</p>}
 
         <h3 className="text-lg font-semibold mt-4">Split Among:</h3>
         {splitAmong.map((entry, index) => (
@@ -219,55 +216,66 @@ const Expense: React.FC = () => {
               className="w-1/3 p-2 rounded-md text-black border border-gray-600 focus:ring focus:ring-blue-500"
               disabled={splitEvenly}
             />
-            <button onClick={() => removeSplitField(index)} className="bg-red-500 text-white p-2 rounded-md">
+            <button
+              onClick={() => removeSplitField(index)}
+              className="bg-red-500 text-white p-2 rounded-md"
+            >
               ✖
             </button>
           </div>
         ))}
 
-        <button onClick={addSplitField} className="w-full mt-2 bg-gray-600 hover:bg-gray-700 transition p-2 rounded-md font-semibold">
+        <button
+          onClick={addSplitField}
+          className="w-full mt-2 bg-gray-600 hover:bg-gray-700 transition p-2 rounded-md font-semibold"
+        >
           + Add User
         </button>
 
-        <button onClick={handleAddExpense} className="w-full mt-4 bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold">
+        <button
+          onClick={handleAddExpense}
+          className="w-full mt-4 bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold"
+        >
           Submit Expense
         </button>
       </div>
       <div>
         <h2 className="text-2xl font-bold mb-3">Expenses</h2>
 
-          {expenses.length > 0 && (
+        {expenses.length > 0 && (
           <button
             onClick={handleMarkAllAsPaid}
             className="mb-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
           >
             Mark All as Paid
           </button>
-  )}
+        )}
 
-    {expenses.length === 0 ? (
-      <p className="text-gray-400">No expenses recorded yet.</p>
-    ) : (
-    <div className="space-y-4">
-      {expenses.map((expense) => (
-        <div key={expense.id} className="p-4 bg-gray-800 rounded-lg shadow-md">
-          <h3 className="text-lg font-bold">{expense.description}</h3>
+        {expenses.length === 0 ? (
+          <p className="text-gray-400">No expenses recorded yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {expenses.map((expense) => (
+              <div key={expense.id} className="p-4 bg-gray-800 rounded-lg shadow-md">
+                <h3 className="text-lg font-bold">{expense.description}</h3>
 
-          {expense.splitAmong.map((split, i) => (
-            <p key={i} className="text-sm text-gray-400">
-              {split.user} pays: ${split.amount.toFixed(2)}
-            </p>
-          ))}
+                {expense.splitAmong.map((split, i) => (
+                  <p key={i} className="text-sm text-gray-400">
+                    {split.user} pays: ${split.amount.toFixed(2)}
+                  </p>
+                ))}
 
-          <p className="text-sm text-gray-400">Paid By: {expense.paidBy}</p>
-          <p className={`text-sm ${expense.status === 'settled' ? 'text-green-400' : 'text-yellow-400'}`}>
-            Status: {expense.status}
-          </p>
+                <p className="text-sm text-gray-400">Paid By: {expense.paidBy}</p>
+                <p
+                  className={`text-sm ${expense.status === 'settled' ? 'text-green-400' : 'text-yellow-400'}`}
+                >
+                  Status: {expense.status}
+                </p>
 
-          {expense.status === 'pending' && (
-            <button
-              onClick={() => handleMarkAsPaid(expense.id)}
-                className="mt-2 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                {expense.status === 'pending' && (
+                  <button
+                    onClick={() => handleMarkAsPaid(expense.id)}
+                    className="mt-2 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
                   >
                     Mark as Paid
                   </button>

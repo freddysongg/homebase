@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Tasks from '@/components/Tasks';
+import Tasks from '@/components/tasks/Tasks';
 
 export default function TasksPage() {
   const router = useRouter();

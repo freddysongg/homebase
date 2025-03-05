@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Expense from '@/components/Expense';
+import Expense from '@/components/expense/Expense';
 
 export default function ExpensePage() {
   const router = useRouter();

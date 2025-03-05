@@ -1,10 +1,10 @@
 import React from 'react';
-import SignUp from '@/components/signup/SignUp';
+import Homes from '@/components/homes/Homes';
 
 function page() {
   return (
     <div>
-      <SignUp />
+      <Homes />
     </div>
   );
 }
