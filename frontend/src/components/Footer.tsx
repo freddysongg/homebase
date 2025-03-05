@@ -21,16 +21,16 @@ const Footer = () => {
         </div>
 
         <nav className="flex space-x-4 text-sm font-medium mt-3 md:mt-0">
-          <Link href="/chore" className="hover:underline">
+          <Link href="/" className="hover:underline">
             Chore Management
           </Link>
-          <Link href="/expense" className="hover:underline">
+          <Link href="/" className="hover:underline">
             Expense Tracking
           </Link>
-          <Link href="/tasks" className="hover:underline">
+          <Link href="/" className="hover:underline">
             Household Tasks
           </Link>
-          <Link href="/user-profiles" className="hover:underline">
+          <Link href="/" className="hover:underline">
             User Profiles
           </Link>
         </nav>
