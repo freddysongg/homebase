@@ -33,7 +33,7 @@ const Login = () => {
       }
 
       localStorage.setItem('token', data.token);
-      router.push('/expense');
+      router.push('/homes');
       window.location.reload();
     } catch (err: any) {
       setError(err.message || 'An error occurred during login.');

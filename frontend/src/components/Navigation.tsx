@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false); 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); 
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
-    setIsDropdownOpen(false); 
+    setIsDropdownOpen(false);
     router.push('/login');
   };
 
