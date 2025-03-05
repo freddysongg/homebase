@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Chore from '@/components/Chore';
+import Chore from '@/components/chore/Chore';
 
 export default function ChorePage() {
   const router = useRouter();
