@@ -8,9 +8,10 @@ import { useRouter } from 'next/navigation';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,36 +19,23 @@ const Login = () => {
     setError('');
 
     try {
-      console.log('Sending login request...');
       const response = await fetch(`http://localhost:5001/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', JSON.stringify([...response.headers]));
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error response data:', errorData);
         throw new Error(errorData.message || 'Login failed. Please try again.');
       }
 
       const data = await response.json();
-      console.log('Login successful:', data);
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', data.token);
-      }
+      localStorage.setItem('token', data.token);
 
       router.push('/homes');
     } catch (error) {
-      const err = error as Error; // Type assertion
-      console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      setError((error as Error).message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -77,13 +65,26 @@ const Login = () => {
           </div>
           <div>
             <div className="block text-sm font-medium">Password</div>
-            <input
-              type="password"
-              className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div className="absolute inset-y-0 right-2 mt-1 flex items-center text-black">
+                <label htmlFor="show-password" className="text-sm cursor-pointer">
+                  Show
+                </label>
+                <input
+                  type="checkbox"
+                  id="show-password"
+                  className="ml-1 cursor-pointer"
+                  onChange={() => setShowPassword(!showPassword)}
+                />
+              </div>
+            </div>
           </div>
           <button
             type="submit"
