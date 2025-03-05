@@ -5,21 +5,24 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Name is required"],
+      required: [true, "Please add a name"],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: [true, "Please add an email"],
       unique: true,
       trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        "Please add a valid email",
+      ],
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters"],
+      required: [true, "Please add a password"],
+      minlength: 6,
+      select: false,
     },
     role: {
       type: String,
@@ -29,7 +32,7 @@ const userSchema = new mongoose.Schema(
     household_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Household",
-      required: [true, "Household ID is required"],
+      default: null,
     },
     preferences: {
       notifications: {

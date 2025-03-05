@@ -1,7 +1,16 @@
 import Household from "../models/Household.js";
+import User from "../models/User.js";
 
 export const createHousehold = async (req, res) => {
   try {
+    // Check if user already has a household
+    if (req.user.household_id) {
+      return res.status(400).json({
+        success: false,
+        message: "User already belongs to a household",
+      });
+    }
+
     const household = await Household.create({
       ...req.body,
       created_by: req.user._id,
@@ -9,7 +18,7 @@ export const createHousehold = async (req, res) => {
     });
 
     // Update user's household_id
-    await req.user.updateOne({ household_id: household._id });
+    await User.findByIdAndUpdate(req.user._id, { household_id: household._id });
 
     res.status(201).json({
       success: true,
@@ -161,6 +170,15 @@ export const addMember = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "User is already a member",
+      });
+    }
+
+    // Check if user is already in another household
+    const userToAdd = await User.findById(userId);
+    if (userToAdd.household_id) {
+      return res.status(400).json({
+        success: false,
+        message: "User already belongs to another household",
       });
     }
 
