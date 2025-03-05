@@ -17,44 +17,47 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         if (!token) {
           throw new Error('Token not found. Please log in again.');
         }
-  
+
         // Step 1: Extract the userId from the token
         const decodedToken = jwtDecode(token) as { userId: string };
         const userId = decodedToken.userId;
-  
+
         // Step 2: Fetch the user's details to get the householdId
         const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`
+          }
         });
-  
+
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user details.');
         }
-  
+
         const userData = await userResponse.json();
         const householdId = userData.householdId;
-  
+
         if (!householdId) {
           throw new Error('User is not associated with any household.');
         }
-  
+
         // Step 3: Fetch the household details using the householdId
-        const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
+        const householdResponse = await fetch(
+          `http://localhost:5001/api/households/${householdId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
         if (!householdResponse.ok) {
           throw new Error('Failed to fetch household details.');
         }
-  
+
         const householdData = await householdResponse.json();
         setMembers(householdData.members); // Update the members state with the fetched data
       } catch (error) {
@@ -62,7 +65,7 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         // Handle error (e.g., show an error message)
       }
     };
-  
+
     fetchHouseholdDetails();
   }, [homeCode]);
 
