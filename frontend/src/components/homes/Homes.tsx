@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 const generateHomeCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -23,24 +24,56 @@ const Homes = () => {
     setHomeCode(generateHomeCode());
   };
 
-  const handleSubmitCreateHome = () => {
+  const handleSubmitCreateHome = async () => {
     if (!homeName.trim() || !homeAddress.trim()) {
       setError('Please enter a home name and address.');
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
+  
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found. Please log in again.');
+      }
+      const decodedToken = jwtDecode(token) as { userId: string };
+      const userId = decodedToken.userId;
 
-    setTimeout(() => {
-      setSuccessMessage(`Home "${homeName}" created! Invite others using the code: ${homeCode}`);
-      setIsLoading(false);
+      const response = await fetch('http://localhost:5001/api/households', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          house_code: homeCode,
+          name: homeName,
+          address: homeAddress,
+          members: [userId]
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create home.');
+      }
+  
+      const data = await response.json();
+      setSuccessMessage(`Home "${data.name}" created! Invite others using the code: ${data.homeCode}`);
       setShowCreateForm(false);
       setHomeName('');
       setHomeAddress('');
       setHomeCode(generateHomeCode());
-    }, 1000);
+    } catch (error) {
+      console.error('Error creating home:', error);
+      const err = error as Error;
+      setError(err.message || 'An error occurred while creating the home.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleJoinHome = () => {
