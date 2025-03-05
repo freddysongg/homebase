@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const Signup = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
   const router = useRouter(); // Initialize useRouter
 
@@ -16,32 +16,32 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
+
     try {
       console.log('Sending registration request...');
       const response = await fetch(`http://localhost:5001/api/auth/register`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password })
       });
-  
+
       console.log('Response status:', response.status);
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error response data:', errorData);
         throw new Error(errorData.message || 'Registration failed. Please try again.');
       }
-  
+
       const data = await response.json();
       console.log('Registration successful:', data);
-  
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', data.token);
       }
-  
+
       router.push('/login');
     } catch (error) {
       if (error instanceof Error) {
