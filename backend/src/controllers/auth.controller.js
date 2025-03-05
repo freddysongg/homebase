@@ -9,13 +9,13 @@ import {
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn: "30d",
   });
 };
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, household_id } = req.body;
+    const { name, email, password } = req.body;
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -34,7 +34,6 @@ export const register = async (req, res) => {
       name,
       email,
       password,
-      household_id,
       verificationToken,
     });
 
@@ -67,7 +66,7 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
+    // Check for email and password
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -76,7 +75,7 @@ export const login = async (req, res) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -96,7 +95,7 @@ export const login = async (req, res) => {
     // Update last active
     await user.updateLastActive();
 
-    // Generate token
+    // Create token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -107,6 +106,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        household_id: user.household_id,
         preferences: user.preferences,
       },
     });

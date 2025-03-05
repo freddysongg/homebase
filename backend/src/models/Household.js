@@ -4,17 +4,40 @@ const householdSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Household name is required"],
+      required: [true, "Please add a household name"],
       trim: true,
     },
     address: {
-      type: String,
-      required: [true, "Address is required"],
+      street: String,
+      city: String,
+      state: String,
+      zip: String,
+      country: String,
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    settings: {
+      currency: {
+        type: String,
+        default: "USD",
+      },
+      language: {
+        type: String,
+        default: "en",
+      },
+      timezone: {
+        type: String,
+        default: "UTC",
+      },
     },
   },
   {
@@ -22,6 +45,4 @@ const householdSchema = new mongoose.Schema(
   },
 );
 
-const Household = mongoose.model("Household", householdSchema);
-
-export default Household;
+export default mongoose.model("Household", householdSchema);

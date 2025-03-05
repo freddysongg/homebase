@@ -1,23 +1,5 @@
 import User from "../models/User.js";
 
-// @desc    Create a new user
-// @route   POST /api/users
-// @access  Public
-export const createUser = async (req, res) => {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Public

@@ -1,7 +1,6 @@
 import express from "express";
 import { protect } from "../middleware/auth.js";
 import {
-  createUser,
   getUsers,
   getUser,
   updateUser,
@@ -12,7 +11,7 @@ const router = express.Router();
 
 router.use(protect);
 
-router.route("/").get(getUsers).post(createUser);
+router.route("/").get(getUsers);
 
 router.route("/:id").get(getUser).put(updateUser).delete(deleteUser);
 
