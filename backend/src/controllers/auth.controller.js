@@ -38,7 +38,7 @@ export const register = async (req, res) => {
     });
 
     // Send verification email
-    await sendVerificationEmail(user.email, verificationToken);
+    //await sendVerificationEmail(user.email, verificationToken);
 
     // Generate token
     const token = generateToken(user._id);

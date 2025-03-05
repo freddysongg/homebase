@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const householdSchema = new mongoose.Schema(
   {
+    house_code: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: [true, "Please add a household name"],
