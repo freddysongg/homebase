@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { useRouter } from 'next/navigation';
 
 const generateHomeCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -16,6 +17,77 @@ const Homes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkUserHome = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Token not found. Please log in again.');
+        }
+
+        // Decode the token to get the user's ID
+        const decodedToken = jwtDecode(token) as { id: string };
+        const userId = decodedToken.id;
+
+        if (!userId) {
+          throw new Error('User ID not found in the token.');
+        }
+
+        // Fetch the logged-in user's details
+        const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user details.');
+        }
+
+        const userData = await userResponse.json();
+        console.log('User Data:', userData); // Debugging: Log user data
+        console.log('Type of household_id:', typeof userData.data.household_id);
+        console.log('Value of household_id:', userData.data.household_id);
+
+        // Check if the user has a household_id
+        console.log('FLAG1');
+
+        if (userData.data.household_id) {
+          console.log('FLAG2');
+          // Fetch the household details using the household_id
+          const householdResponse = await fetch(
+            `http://localhost:5001/api/households/${userData.data.household_id}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+
+          if (!householdResponse.ok) {
+            throw new Error('Failed to fetch household details.');
+          }
+
+          const householdData = await householdResponse.json();
+          console.log('Household Data:', householdData); // Debugging: Log household data
+
+          // Redirect to HomeDetails using the homeCode
+          router.push(`/homes/${householdData.data.house_code}`);
+        }
+      } catch (error) {
+        console.error('Error checking user home:', error);
+        setError('Failed to check user home. Please try again.');
+      }
+    };
+
+    checkUserHome();
+  }, [router]);
 
   const handleCreateHome = () => {
     setShowCreateForm(true);
@@ -39,14 +111,21 @@ const Homes = () => {
       if (!token) {
         throw new Error('Token not found. Please log in again.');
       }
-      const decodedToken = jwtDecode(token) as { userId: string };
-      const userId = decodedToken.userId;
 
+      // Decode the token to get the user's ID
+      const decodedToken = jwtDecode(token) as { id: string };
+      const userId = decodedToken.id;
+
+      if (!userId) {
+        throw new Error('User ID not found in the token.');
+      }
+
+      // Step 1: Create the home
       const createHomeResponse = await fetch('http://localhost:5001/api/households', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           house_code: homeCode,
@@ -56,8 +135,18 @@ const Homes = () => {
         })
       });
 
+      // Check if the response is OK
       if (!createHomeResponse.ok) {
-        const errorData = await createHomeResponse.json();
+        // Attempt to parse the error response as JSON
+        let errorData;
+        try {
+          errorData = await createHomeResponse.json();
+        } catch {
+          // If the response is not JSON, log the raw response
+          const rawResponse = await createHomeResponse.text();
+          console.error('Non-JSON error response:', rawResponse);
+          throw new Error(`Failed to create home. Server responded with: ${rawResponse}`);
+        }
         throw new Error(errorData.message || 'Failed to create home.');
       }
 
@@ -72,23 +161,24 @@ const Homes = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          homeId // Add the home ID to the user's homeId field
+          household_id: homeId // Update the user's household_id
         })
       });
 
       if (!updateUserResponse.ok) {
-        const errorData = await updateUserResponse.json();
+        let errorData;
+        try {
+          errorData = await updateUserResponse.json();
+        } catch {
+          const rawResponse = await updateUserResponse.text();
+          console.error('Non-JSON error response:', rawResponse);
+          throw new Error(`Failed to update user. Server responded with: ${rawResponse}`);
+        }
         throw new Error(errorData.message || 'Failed to update user.');
       }
 
-      // Success
-      setSuccessMessage(
-        `Home "${homeData.name}" created! Invite others using the code: ${homeData.homeCode}`
-      );
-      setShowCreateForm(false);
-      setHomeName('');
-      setHomeAddress('');
-      setHomeCode(generateHomeCode());
+      // Step 3: Redirect to HomeDetails using homeCode
+      router.push(`/homes/${homeData.house_code}`);
     } catch (error) {
       console.error('Error creating home:', error);
       const err = error as Error;
