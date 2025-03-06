@@ -188,20 +188,56 @@ const Homes = () => {
     }
   };
 
-  const handleJoinHome = () => {
+  const handleJoinHome = async () => {
     if (!joinCode.trim()) {
       setError('Please enter a valid home code.');
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
-
-    setTimeout(() => {
-      setSuccessMessage(`Feature coming soon: You would join a home using this code.`);
+  
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found. Please log in again.');
+      }
+  
+      // Step 1: Decode the token to get the user ID
+      const decodedToken = jwtDecode(token) as { userId: string };
+      const userId = decodedToken.userId;
+  
+      // Step 2: Send the join code to the backend
+      const response = await fetch('http://localhost:5001/api/households/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          homeCode: joinCode,
+          userId, // Include the user ID in the request body
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to join household.');
+      }
+  
+      const data = await response.json();
+  
+      // Step 3: Show success message
+      setSuccessMessage(`Successfully joined home: ${data.data.name}`);
+      setJoinCode(''); // Clear the join code input
+    } catch (error) {
+      console.error('Error joining home:', error);
+      const err = error as Error;
+      setError(err.message || 'An error occurred while joining the home.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

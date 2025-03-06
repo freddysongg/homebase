@@ -147,45 +147,40 @@ export const deleteHousehold = async (req, res) => {
 
 export const addMember = async (req, res) => {
   try {
-    const household = await Household.findById(req.params.id);
-    const { userId } = req.body;
+    const { joinCode } = req.body;
+    const userId = req.user._id; // Extracted from the token
 
+    // Step 1: Find the household with the matching homeCode
+    const household = await Household.findOne({ joinCode });
     if (!household) {
       return res.status(404).json({
         success: false,
-        message: "Household not found",
+        message: 'Invalid home code',
       });
     }
 
-    // Only creator can add members
-    if (!household.created_by.equals(req.user._id)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to add members",
-      });
-    }
-
-    // Check if user is already a member
+    // Step 2: Check if the user is already a member
     if (household.members.includes(userId)) {
       return res.status(400).json({
         success: false,
-        message: "User is already a member",
+        message: 'User is already a member of this household',
       });
     }
 
-    // Check if user is already in another household
-    const userToAdd = await User.findById(userId);
-    if (userToAdd.household_id) {
+    // Step 3: Check if the user is already in another household
+    const user = await User.findById(userId);
+    if (user.household_id) {
       return res.status(400).json({
         success: false,
-        message: "User already belongs to another household",
+        message: 'User already belongs to another household',
       });
     }
 
+    // Step 4: Add the user to the household's members array
     household.members.push(userId);
     await household.save();
 
-    // Update user's household_id
+    // Step 5: Update the user's household_id
     await User.findByIdAndUpdate(userId, { household_id: household._id });
 
     res.status(200).json({
