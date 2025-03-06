@@ -72,7 +72,7 @@ const Homes = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          homeId, // Add the home ID to the user's homeId field
+          household_id: homeId, // Add the home ID to the user's homeId field
         }),
       });
   
