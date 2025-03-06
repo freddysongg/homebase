@@ -10,7 +10,12 @@ const generateHomeCode = () => {
 
 const Homes = () => {
   const [homeName, setHomeName] = useState('');
-  const [homeAddress, setHomeAddress] = useState('');
+  const [homeAddress, setHomeAddress] = useState({
+    street: '',
+    state: '',
+    zip: '',
+    country: ''
+  });
   const [homeCode, setHomeCode] = useState(generateHomeCode());
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +101,20 @@ const Homes = () => {
     setHomeCode(generateHomeCode());
   };
 
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setHomeAddress((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmitCreateHome = async () => {
-    if (!homeName.trim() || !homeAddress.trim()) {
-      setError('Please enter a home name and address.');
+    if (
+      !homeName.trim() ||
+      !homeAddress.street.trim() ||
+      !homeAddress.state.trim() ||
+      !homeAddress.zip.trim() ||
+      !homeAddress.country.trim()
+    ) {
+      setError('Please fill out all address fields.');
       return;
     }
 
@@ -135,22 +151,25 @@ const Homes = () => {
         })
       });
 
+      const responseText = await createHomeResponse.text();
+
       // Check if the response is OK
       if (!createHomeResponse.ok) {
-        // Attempt to parse the error response as JSON
-        let errorData;
+        // // Attempt to parse the error response as JSON
+        // let errorData;
         try {
-          errorData = await createHomeResponse.json();
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.message || 'Failed to create home.');
         } catch {
           // If the response is not JSON, log the raw response
-          const rawResponse = await createHomeResponse.text();
-          console.error('Non-JSON error response:', rawResponse);
-          throw new Error(`Failed to create home. Server responded with: ${rawResponse}`);
+          // const rawResponse = await createHomeResponse.text();
+          // console.error('Non-JSON error response:', rawResponse);
+          throw new Error(`Failed to create home. Server responded with: ${responseText}`);
         }
-        throw new Error(errorData.message || 'Failed to create home.');
+        // throw new Error(errorData.message || 'Failed to create home.');
       }
 
-      const homeData = await createHomeResponse.json();
+      const homeData = JSON.parse(responseText);
       const homeId = homeData._id; // Get the newly created home's ID
 
       // Step 2: Update the user with the new home ID
@@ -161,8 +180,8 @@ const Homes = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          household_id: homeId, // Add the home ID to the user's homeId field
-        }),
+          household_id: homeId // Add the home ID to the user's homeId field
+        })
       });
 
       if (!updateUserResponse.ok) {
@@ -193,41 +212,41 @@ const Homes = () => {
       setError('Please enter a valid home code.');
       return;
     }
-  
+
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
-  
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Token not found. Please log in again.');
       }
-  
+
       // Step 1: Decode the token to get the user ID
       const decodedToken = jwtDecode(token) as { userId: string };
       const userId = decodedToken.userId;
-  
+
       // Step 2: Send the join code to the backend
       const response = await fetch('http://localhost:5001/api/households/members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           homeCode: joinCode,
-          userId, // Include the user ID in the request body
-        }),
+          userId // Include the user ID in the request body
+        })
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to join household.');
       }
-  
+
       const data = await response.json();
-  
+
       // Step 3: Show success message
       setSuccessMessage(`Successfully joined home: ${data.data.name}`);
       setJoinCode(''); // Clear the join code input
@@ -293,12 +312,49 @@ const Homes = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Home Address</label>
+              <label className="block text-sm font-medium">Street</label>
               <input
                 type="text"
+                name="street"
                 className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={homeAddress}
-                onChange={(e) => setHomeAddress(e.target.value)}
+                value={homeAddress.street}
+                onChange={handleAddressChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">State</label>
+              <input
+                type="text"
+                name="state"
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={homeAddress.state}
+                onChange={handleAddressChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">Zip Code</label>
+              <input
+                type="text"
+                name="zip"
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={homeAddress.zip}
+                onChange={handleAddressChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">Country</label>
+              <input
+                type="text"
+                name="country"
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={homeAddress.country}
+                onChange={handleAddressChange}
                 required
               />
             </div>

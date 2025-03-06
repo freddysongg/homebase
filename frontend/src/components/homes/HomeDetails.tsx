@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { useRouter } from 'next/navigation';
 
 const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   const [homeName, setHomeName] = useState<string | null>(null);
@@ -9,6 +10,8 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   const [members, setMembers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchHouseholdDetails = async () => {
@@ -62,10 +65,13 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         const householdData = await householdResponse.json();
         console.log('Household Data:', householdData); // Debugging
 
-        // Ensure members is always an array
         setHomeName(householdData.data.name || 'Unknown Home');
-        setHomeAddress(householdData.address || 'Unknown Address');
-        setMembers(Array.isArray(householdData.members) ? householdData.members : []);
+        setHomeAddress(householdData.data.address || 'Unknown Address');
+        setMembers(
+          Array.isArray(householdData.data.members)
+            ? householdData.data.members.map((member: { name: string }) => member.name)
+            : []
+        );
       } catch (error) {
         console.error('Error fetching household details:', error);
         setError('Failed to fetch household details. Please try again.');
@@ -77,10 +83,65 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
     fetchHouseholdDetails();
   }, [homeCode]);
 
+  const handleLeaveHome = async () => {
+    try {
+      setIsLeaving(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found. Please log in again.');
+      }
+
+      // Extract userId from token
+      const decodedToken = jwtDecode(token) as { id: string };
+      const userId = decodedToken.id;
+
+      // Fetch user details to get the household ID
+      const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user details.');
+      }
+
+      const userData = await userResponse.json();
+      const householdId = userData.data?.household_id;
+
+      if (!householdId) {
+        throw new Error('User is not associated with any household.');
+      }
+
+      // Send DELETE request to remove household
+      const response = await fetch(`http://localhost:5001/api/households/${householdId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete household.');
+      }
+
+      // Redirect the user back to the homes page
+      router.push('/homes');
+    } catch (error) {
+      console.error('Error leaving home:', error);
+      setError('Failed to leave home. Please try again.');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white">
       <h1 className="text-4xl font-bold mb-6 text-black">Home Details</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-96">
+      <div className="bg-black p-6 rounded-lg shadow-md w-96">
         {isLoading ? (
           <p>Loading home details...</p>
         ) : error ? (
@@ -99,6 +160,13 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
                 members.map((member, index) => <li key={index}>• {member}</li>)
               )}
             </ul>
+            <button
+              onClick={handleLeaveHome}
+              className="w-full bg-red-600 hover:bg-red-700 transition p-2 rounded-md font-bold mt-4"
+              disabled={isLeaving}
+            >
+              {isLeaving ? 'Leaving...' : 'Leave Home'}
+            </button>
           </>
         )}
       </div>

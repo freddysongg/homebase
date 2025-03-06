@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
-  const router = useRouter();
+  // const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ const Login = () => {
       const data = await response.json();
       localStorage.setItem('token', data.token);
 
-      router.push('/homes');
+      window.location.href = '/homes';
     } catch (error) {
       setError((error as Error).message || 'Login failed. Please try again.');
     } finally {
