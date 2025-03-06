@@ -161,8 +161,8 @@ const Homes = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          household_id: homeId // Update the user's household_id
-        })
+          household_id: homeId, // Add the home ID to the user's homeId field
+        }),
       });
 
       if (!updateUserResponse.ok) {
