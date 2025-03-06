@@ -20,6 +20,6 @@ router
   .put(updateHousehold)
   .delete(deleteHousehold);
 
-router.route("/:id/members").post(addMember);
+router.route("/members").post(addMember);
 
 export default router;

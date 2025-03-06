@@ -7,6 +7,7 @@ import choreRoutes from "./routes/chore.routes.js";
 import householdRoutes from "./routes/household.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 
+
 const app = express();
 
 // Middleware
