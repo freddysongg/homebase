@@ -117,25 +117,25 @@ const Homes = () => {
       setError('Please fill out all address fields.');
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
-
+  
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Token not found. Please log in again.');
       }
-
+  
       // Decode the token to get the user's ID
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
-
+  
       if (!userId) {
         throw new Error('User ID not found in the token.');
       }
-
+  
       // Step 1: Create the home
       const createHomeResponse = await fetch('http://localhost:5001/api/households', {
         method: 'POST',
@@ -150,31 +150,23 @@ const Homes = () => {
           members: [userId]
         })
       });
-
-      const responseText = await createHomeResponse.text();
-
-      // Check if the response is OK
+  
+      // Check if the response is OK (status code 200-299)
       if (!createHomeResponse.ok) {
-        // // Attempt to parse the error response as JSON
-        // let errorData;
-        try {
-          const errorData = JSON.parse(responseText);
-          throw new Error(errorData.message || 'Failed to create home.');
-        } catch {
-          // If the response is not JSON, log the raw response
-          // const rawResponse = await createHomeResponse.text();
-          // console.error('Non-JSON error response:', rawResponse);
-          throw new Error(`Failed to create home. Server responded with: ${responseText}`);
-        }
-        // throw new Error(errorData.message || 'Failed to create home.');
+        // Handle non-OK responses (e.g., 404, 500)
+        const errorText = await createHomeResponse.text();
+        console.error('Server Error:', errorText);
+        throw new Error(`Failed to create home. Server responded with: ${errorText}`);
       }
-
-      const homeData = JSON.parse(responseText);
+  
+      // Parse the response as JSON
+      const homeData = await createHomeResponse.json();
+  
       const homeId = homeData._id; // Get the newly created home's ID
-
+  
       // Step 2: Update the user with the new home ID
       const updateUserResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
@@ -183,19 +175,13 @@ const Homes = () => {
           household_id: homeId // Add the home ID to the user's homeId field
         })
       });
-
+  
       if (!updateUserResponse.ok) {
-        let errorData;
-        try {
-          errorData = await updateUserResponse.json();
-        } catch {
-          const rawResponse = await updateUserResponse.text();
-          console.error('Non-JSON error response:', rawResponse);
-          throw new Error(`Failed to update user. Server responded with: ${rawResponse}`);
-        }
-        throw new Error(errorData.message || 'Failed to update user.');
+        const errorText = await updateUserResponse.text();
+        console.error('Server Error:', errorText);
+        throw new Error(`Failed to update user. Server responded with: ${errorText}`);
       }
-
+  
       // Step 3: Redirect to HomeDetails using homeCode
       router.push(`/homes/${homeData.house_code}`);
     } catch (error) {
