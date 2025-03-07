@@ -6,7 +6,19 @@ import { useRouter } from 'next/navigation';
 
 const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   const [homeName, setHomeName] = useState<string | null>(null);
-  const [homeAddress, setHomeAddress] = useState<string | null>(null);
+  const [homeAddress, setHomeAddress] = useState<{
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  }>({
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: ''
+  });
   const [members, setMembers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +78,15 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         console.log('Household Data:', householdData); // Debugging
 
         setHomeName(householdData.data.name || 'Unknown Home');
-        setHomeAddress(householdData.data.address || 'Unknown Address');
+        setHomeAddress(
+          householdData.data.address || {
+            street: '',
+            city: '',
+            state: '',
+            zip: '',
+            country: ''
+          }
+        );
         setMembers(
           Array.isArray(householdData.data.members)
             ? householdData.data.members.map((member: { name: string }) => member.name)
@@ -149,7 +169,10 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         ) : (
           <>
             <p className="text-xl font-bold">Home Name: {homeName}</p>
-            <p className="text-lg">Address: {homeAddress}</p>
+            <p className="text-lg">
+              Address: {homeAddress.street}, {homeAddress.city}, {homeAddress.state}{' '}
+              {homeAddress.zip}, {homeAddress.country}
+            </p>
             <p className="text-lg">Home Code: {homeCode}</p>
 
             <h2 className="text-xl font-bold mt-4">👥 Members:</h2>
