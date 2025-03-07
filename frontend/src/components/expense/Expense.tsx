@@ -165,12 +165,14 @@ const Expense = () => {
   const toggleSplitMethod = () => {
     setSplitEvenly(!splitEvenly);
     setErrorMessage('');
-
-    if (!splitEvenly && totalAmount && splitAmong.length > 0) {
-      const evenAmount = (Number(totalAmount) / splitAmong.length).toFixed(2);
-      setSplitAmong(splitAmong.map((entry) => ({ ...entry, amount: evenAmount })));
-    }
   };
+
+  useEffect(() => {
+    if (splitEvenly && totalAmount && splitAmong.length > 0) {
+      const evenAmount = (Number(totalAmount) / splitAmong.length).toFixed(2);
+      setSplitAmong((prevSplits) => prevSplits.map((entry) => ({ ...entry, amount: evenAmount })));
+    }
+  }, [totalAmount, splitAmong.length, splitEvenly]);
 
   const validateExpense = () => {
     if (
