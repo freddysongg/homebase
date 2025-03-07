@@ -12,6 +12,7 @@ const Homes = () => {
   const [homeName, setHomeName] = useState('');
   const [homeAddress, setHomeAddress] = useState({
     street: '',
+    city: '',
     state: '',
     zip: '',
     country: ''
@@ -110,6 +111,7 @@ const Homes = () => {
     if (
       !homeName.trim() ||
       !homeAddress.street.trim() ||
+      !homeAddress.city.trim() ||
       !homeAddress.state.trim() ||
       !homeAddress.zip.trim() ||
       !homeAddress.country.trim()
@@ -117,25 +119,25 @@ const Homes = () => {
       setError('Please fill out all address fields.');
       return;
     }
-  
+
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
-  
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Token not found. Please log in again.');
       }
-  
+
       // Decode the token to get the user's ID
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
-  
+
       if (!userId) {
         throw new Error('User ID not found in the token.');
       }
-  
+
       // Step 1: Create the home
       const createHomeResponse = await fetch('http://localhost:5001/api/households', {
         method: 'POST',
@@ -150,7 +152,7 @@ const Homes = () => {
           members: [userId]
         })
       });
-  
+
       // Check if the response is OK (status code 200-299)
       if (!createHomeResponse.ok) {
         // Handle non-OK responses (e.g., 404, 500)
@@ -158,12 +160,12 @@ const Homes = () => {
         console.error('Server Error:', errorText);
         throw new Error(`Failed to create home. Server responded with: ${errorText}`);
       }
-  
+
       // Parse the response as JSON
       const homeData = await createHomeResponse.json();
-  
+
       const homeId = homeData._id; // Get the newly created home's ID
-  
+
       // Step 2: Update the user with the new home ID
       const updateUserResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
         method: 'PUT',
@@ -175,13 +177,13 @@ const Homes = () => {
           household_id: homeId // Add the home ID to the user's homeId field
         })
       });
-  
+
       if (!updateUserResponse.ok) {
         const errorText = await updateUserResponse.text();
         console.error('Server Error:', errorText);
         throw new Error(`Failed to update user. Server responded with: ${errorText}`);
       }
-  
+
       // Step 3: Redirect to HomeDetails using homeCode
       router.push(`/homes/${homeData.house_code}`);
     } catch (error) {
@@ -246,7 +248,7 @@ const Homes = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen text-white my-10">
       <h1 className="text-4xl font-bold mb-6 text-black">Manage Your Home</h1>
 
       {successMessage && (
@@ -304,6 +306,18 @@ const Homes = () => {
                 name="street"
                 className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={homeAddress.street}
+                onChange={handleAddressChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">City</label>
+              <input
+                type="text"
+                name="city"
+                className="w-full mt-1 p-2 text-black rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={homeAddress.city}
                 onChange={handleAddressChange}
                 required
               />
