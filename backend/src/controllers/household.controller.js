@@ -147,11 +147,11 @@ export const deleteHousehold = async (req, res) => {
 
 export const addMember = async (req, res) => {
   try {
-    const { joinCode } = req.body;
+    const { homeCode } = req.body;
     const userId = req.user._id; // Extracted from the token
 
     // Step 1: Find the household with the matching homeCode
-    const household = await Household.findOne({ joinCode });
+    const household = await Household.findOne({ house_code: homeCode });
     if (!household) {
       return res.status(404).json({
         success: false,
