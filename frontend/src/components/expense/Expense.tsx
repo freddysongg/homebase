@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 interface SplitAmong {
   user: string;
@@ -9,30 +10,82 @@ interface SplitAmong {
 
 interface Expense {
   id: number;
+  title: string;
   description: string;
   totalAmount: number;
   paidBy: string;
   splitAmong: SplitAmong[];
   status: 'pending' | 'settled';
+  category: 'rent' | 'utilities' | 'groceries' | 'household' | 'other';
+  due_date: string;
 }
 
-const Expense: React.FC = () => {
+interface Roommate {
+  id: string;
+  name: string;
+}
+
+const Expense = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [totalAmount, setTotalAmount] = useState<number | ''>('');
   const [paidBy, setPaidBy] = useState('');
+  const [category, setCategory] = useState<
+    'rent' | 'utilities' | 'groceries' | 'household' | 'other'
+  >('rent');
+  const [dueDate, setDueDate] = useState('');
   const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
   const [splitEvenly, setSplitEvenly] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [roommates, setRoommates] = useState<string[]>([]);
+  const [roommates, setRoommates] = useState<Roommate[]>([]);
 
   const fetchRoommates = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/house');
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found, user not logged in.');
+      }
 
-      const data = await response.json();
-      setRoommates(data.map((roommate: { name: string }) => roommate.name));
+      // Fetch user data to get the householdId
+      const decodedToken = jwtDecode(token) as { id: string };
+      const userId = decodedToken.id;
+
+      const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!userResponse.ok) throw new Error('Failed to fetch user details');
+
+      const userData = await userResponse.json();
+      const householdId = userData.data?.household_id;
+
+      if (!householdId) throw new Error('User is not associated with any household');
+
+      const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!householdResponse.ok) throw new Error('Failed to fetch household data');
+
+      const householdData = await householdResponse.json();
+
+      setRoommates(
+        householdData.data.members.map((member: { name: string; _id: string }) => ({
+          name: member.name,
+          id: member._id
+        }))
+      );
+      console.log('Fetched roommates:', householdData.data.members);
+      console.log('Actual roommates:', roommates);
     } catch (error) {
       console.error('Error fetching roommates:', error);
     }
@@ -54,8 +107,7 @@ const Expense: React.FC = () => {
     if (field === 'user') {
       updatedSplit[index][field] = value;
     } else if (field === 'amount') {
-      const numericValue = value.replace(/[^0-9.]/g, '');
-      updatedSplit[index][field] = numericValue;
+      updatedSplit[index][field] = value;
     }
 
     setSplitAmong(updatedSplit);
@@ -87,7 +139,15 @@ const Expense: React.FC = () => {
   };
 
   const validateExpense = () => {
-    if (!description || totalAmount === '' || !paidBy || splitAmong.length === 0) {
+    if (
+      !title ||
+      !description ||
+      totalAmount === '' ||
+      !paidBy ||
+      splitAmong.length === 0 ||
+      !category ||
+      !dueDate
+    ) {
       setErrorMessage('Please fill in all fields.');
       setTimeout(() => setErrorMessage(''), 3000);
       return false;
@@ -105,35 +165,74 @@ const Expense: React.FC = () => {
     return true;
   };
 
-  const handleMarkAsPaid = (expenseId: number) => {
-    setExpenses(
-      expenses.map((expense) =>
-        expense.id === expenseId ? { ...expense, status: 'settled' } : expense
-      )
-    );
-  };
+  // const handleMarkAsPaid = (expenseId: number) => {
+  //   setExpenses(
+  //     expenses.map((expense) =>
+  //       expense.id === expenseId ? { ...expense, status: 'settled' } : expense
+  //     )
+  //   );
+  // };
 
-  const handleMarkAllAsPaid = () => {
-    setExpenses(expenses.map((expense) => ({ ...expense, status: 'settled' })));
-  };
-
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!validateExpense()) return;
 
-    const newExpense: Expense = {
-      id: expenses.length + 1,
+    const newExpense = {
+      title,
+      amount: Number(totalAmount),
+      category,
       description,
-      totalAmount: Number(totalAmount),
-      paidBy,
-      splitAmong: splitAmong.map((entry) => ({ ...entry, amount: Number(entry.amount) })),
-      status: 'pending'
+      due_date: dueDate,
+      splits: splitAmong.map((entry) => {
+        const roommate = roommates.find((roommate) => roommate.id === entry.user);
+        if (!roommate) {
+          throw new Error(`Roommate with id ${entry.user} not found.`);
+        }
+        return {
+          user_id: roommate.id,
+          amount: Number(entry.amount)
+        };
+      }),
+      recurring: null,
+      receipt_url: ''
     };
 
-    setExpenses([...expenses, newExpense]);
-    setDescription('');
-    setTotalAmount('');
-    setPaidBy('');
-    setSplitAmong([]);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found, user not logged in.');
+      }
+
+      console.log('Sending expense data:', newExpense);
+
+      const response = await fetch('http://localhost:5001/api/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newExpense)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error adding expense:', errorData);
+        throw new Error(errorData.message || 'Failed to add expense');
+      }
+
+      const createdExpense = await response.json();
+      setExpenses([...expenses, createdExpense.data]);
+
+      setTitle('');
+      setDescription('');
+      setTotalAmount('');
+      setPaidBy('');
+      setCategory('rent');
+      setDueDate('');
+      setSplitAmong([]);
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      setErrorMessage('Failed to add expense. Please try again.');
+    }
   };
 
   return (
@@ -142,6 +241,15 @@ const Expense: React.FC = () => {
 
       <div className="mb-6 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-3">Add Expense</h2>
+
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+        />
+
         <input
           type="text"
           placeholder="Description"
@@ -149,6 +257,7 @@ const Expense: React.FC = () => {
           onChange={(e) => setDescription(e.target.value)}
           className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
         />
+
         <input
           type="text"
           placeholder="Total Amount"
@@ -157,17 +266,40 @@ const Expense: React.FC = () => {
           className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
         />
 
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+        />
+
         <select
           value={paidBy}
           onChange={(e) => setPaidBy(e.target.value)}
-          className="w-full p-2 mb-4 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
         >
           <option value="">Select Paid By</option>
           {roommates.map((roommate, i) => (
-            <option key={i} value={roommate}>
-              {roommate}
+            <option key={i} value={roommate.id}>
+              {roommate.name}
             </option>
           ))}
+        </select>
+
+        <select
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value as 'rent' | 'utilities' | 'groceries' | 'household' | 'other'
+            )
+          }
+          className="w-full p-2 mb-4 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+        >
+          <option value="rent">Rent</option>
+          <option value="utilities">Utilities</option>
+          <option value="groceries">Groceries</option>
+          <option value="household">Household</option>
+          <option value="other">Other</option>
         </select>
 
         <div className="flex items-center space-x-4 mb-4">
@@ -203,8 +335,8 @@ const Expense: React.FC = () => {
             >
               <option value="">Select User</option>
               {roommates.map((roommate, i) => (
-                <option key={i} value={roommate}>
-                  {roommate}
+                <option key={i} value={roommate.id}>
+                  {roommate.name}
                 </option>
               ))}
             </select>
@@ -238,52 +370,6 @@ const Expense: React.FC = () => {
         >
           Submit Expense
         </button>
-      </div>
-      <div>
-        <h2 className="text-2xl font-bold mb-3">Expenses</h2>
-
-        {expenses.length > 0 && (
-          <button
-            onClick={handleMarkAllAsPaid}
-            className="mb-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-          >
-            Mark All as Paid
-          </button>
-        )}
-
-        {expenses.length === 0 ? (
-          <p className="text-gray-400">No expenses recorded yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {expenses.map((expense) => (
-              <div key={expense.id} className="p-4 bg-gray-800 rounded-lg shadow-md">
-                <h3 className="text-lg font-bold">{expense.description}</h3>
-
-                {expense.splitAmong.map((split, i) => (
-                  <p key={i} className="text-sm text-gray-400">
-                    {split.user} pays: ${split.amount.toFixed(2)}
-                  </p>
-                ))}
-
-                <p className="text-sm text-gray-400">Paid By: {expense.paidBy}</p>
-                <p
-                  className={`text-sm ${expense.status === 'settled' ? 'text-green-400' : 'text-yellow-400'}`}
-                >
-                  Status: {expense.status}
-                </p>
-
-                {expense.status === 'pending' && (
-                  <button
-                    onClick={() => handleMarkAsPaid(expense.id)}
-                    className="mt-2 bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
-                  >
-                    Mark as Paid
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
