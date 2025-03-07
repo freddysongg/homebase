@@ -3,21 +3,27 @@
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
-interface SplitAmong {
-  user: string;
-  amount: string;
+interface Split {
+  user_id: { _id: string; name: string };
+  amount: number;
 }
 
 interface Expense {
-  id: number;
+  _id: string;
   title: string;
   description: string;
-  totalAmount: number;
-  paidBy: string;
-  splitAmong: SplitAmong[];
-  status: 'pending' | 'settled';
+  amount: number;
   category: 'rent' | 'utilities' | 'groceries' | 'household' | 'other';
   due_date: string;
+  status: 'pending' | 'settled';
+  splits: Split[];
+  created_by: { _id: string; name: string };
+  household_id: string;
+  receipt_url: string;
+  recurring: { is_recurring: boolean };
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 interface Roommate {
@@ -84,10 +90,33 @@ const Expense = () => {
           id: member._id
         }))
       );
+
       console.log('Fetched roommates:', householdData.data.members);
       console.log('Actual roommates:', roommates);
+
+      fetchExpenses(token);
     } catch (error) {
       console.error('Error fetching roommates:', error);
+    }
+  };
+
+  const fetchExpenses = async (token: string) => {
+    try {
+      const response = await fetch('http://localhost:5001/api/expenses', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch expenses');
+
+      const data = await response.json();
+      console.log('Fetched expenses:', data); // Debugging
+      setExpenses(data.data || []);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
     }
   };
 
@@ -370,6 +399,34 @@ const Expense = () => {
         >
           Submit Expense
         </button>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold">Expenses</h2>
+        <div className="space-y-4 mt-4">
+          {expenses && expenses.length > 0 ? (
+            expenses.map((expense) => (
+              <div key={expense._id} className="p-4 border rounded-lg bg-gray-800">
+                <h3 className="text-xl font-bold">{expense.title}</h3>
+                <p>{expense.description}</p>
+                <p className="text-lg font-semibold">Total: ${expense.amount}</p>
+                <p>Status: {expense.status}</p>
+                <p>Category: {expense.category}</p>
+                <p>Due Date: {new Date(expense.due_date).toLocaleDateString()}</p>
+                <div className="mt-2">
+                  <h4 className="font-semibold">Split Among:</h4>
+                  {expense.splits.map((split, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span>{split.user_id.name}</span> <span>${split.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No expenses found.</p>
+          )}
+        </div>
       </div>
     </div>
   );
