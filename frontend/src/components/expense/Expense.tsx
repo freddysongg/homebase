@@ -8,6 +8,11 @@ interface Split {
   amount: number;
 }
 
+interface SplitAmong {
+  user: string;
+  amount: string;
+}
+
 interface Expense {
   _id: string;
   title: string;
@@ -406,7 +411,10 @@ const Expense = () => {
         <div className="space-y-4 mt-4">
           {expenses && expenses.length > 0 ? (
             expenses.map((expense) => (
-              <div key={expense._id} className="p-4 border rounded-lg bg-gray-800">
+              <div
+                key={expense._id}
+                className="p-4 border rounded-lg border-gray-800 bg-white text-black"
+              >
                 <h3 className="text-xl font-bold">{expense.title}</h3>
                 <p>{expense.description}</p>
                 <p className="text-lg font-semibold">Total: ${expense.amount}</p>
