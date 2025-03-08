@@ -115,38 +115,23 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
 
-      // Fetch user details to get the household ID
-      const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
-        method: 'GET',
+      const userResponse = await fetch('http://localhost:5001/api/households/leaveHousehold', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          homeCode,
+          userId,
+        }),
       });
 
       if (!userResponse.ok) {
-        throw new Error('Failed to fetch user details.');
+        const errorData = await userResponse.json();
+        throw new Error(errorData.message || 'Failed to remove member.');
       }
 
-      const userData = await userResponse.json();
-      const householdId = userData.data?.household_id;
-
-      if (!householdId) {
-        throw new Error('User is not associated with any household.');
-      }
-
-      // Send DELETE request to remove household
-      const response = await fetch(`http://localhost:5001/api/households/${householdId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete household.');
-      }
 
       // Redirect the user back to the homes page
       router.push('/homes');

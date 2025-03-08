@@ -6,6 +6,7 @@ import {
   updateHousehold,
   deleteHousehold,
   addMember,
+  removeMember,
 } from "../controllers/household.controller.js";
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router
   .delete(deleteHousehold);
 
 router.route("/members").post(addMember);
+router.route("/leaveHousehold").post(removeMember);
 
 export default router;
