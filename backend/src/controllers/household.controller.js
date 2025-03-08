@@ -194,3 +194,44 @@ export const addMember = async (req, res) => {
     });
   }
 };
+
+export const removeMember = async (req, res) => {
+  try {
+    const { homeCode, userId } = req.body;
+
+    // Step 1: Find the household using the homeCode
+    const household = await Household.findOne({ house_code: homeCode });
+    if (!household) {
+      return res.status(404).json({
+        success: false,
+        message: 'Household not found',
+      });
+    }
+
+    // Step 2: Check if the user is a member of the household
+    if (!household.members.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a member of this household',
+      });
+    }
+
+    // Step 3: Remove the user from the household's members array
+    household.members = household.members.filter((member) => member.toString() !== userId);
+    await household.save();
+
+    // Step 4: Remove the household_id from the user's document
+    await User.findByIdAndUpdate(userId, { $unset: { household_id: "" } });
+
+    res.status(200).json({
+      success: true,
+      message: 'User removed from household successfully',
+      data: household,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
