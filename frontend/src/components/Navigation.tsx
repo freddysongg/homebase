@@ -3,24 +3,71 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null); // State to store the user's name
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
+  const fetchUserDetails = async () => {
     const token = localStorage.getItem('token');
     if (token) {
-      setIsLoggedIn(true);
+      try {
+        const decodedToken: { id?: string; userId?: string } = jwtDecode(token);
+        console.log('Decoded Token:', decodedToken);
+
+        const userId = decodedToken.id || decodedToken.userId;
+        console.log('User ID from token:', userId);
+
+        if (userId) {
+          const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log('Response:', response);
+
+          const responseText = await response.text();
+          console.log('Response Text:', responseText);
+
+          if (response.ok) {
+            const result = JSON.parse(responseText);
+            console.log('Backend Response:', result);
+
+            if (result.success && result.data) {
+              setUserName(result.data.name);
+              setIsLoggedIn(true);
+            } else {
+              console.error('Failed to fetch user details:', result.message);
+              setIsLoggedIn(false);
+            }
+          } else {
+            console.error('Failed to fetch user details:', response.statusText);
+            setIsLoggedIn(false);
+          }
+        } else {
+          console.error('User ID not found in token');
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+        setIsLoggedIn(false);
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchUserDetails();
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
+    setUserName(null);
     setIsDropdownOpen(false);
     router.push('/login');
   };
@@ -69,7 +116,7 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="hover:text-blue-400 transition"
               >
-                User ▼
+                {userName || 'User'} ▼ {/* Display the user's name if available */}
               </button>
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
