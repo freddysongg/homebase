@@ -23,6 +23,8 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [leaveSuccess, setLeaveSuccess] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -132,8 +134,11 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         throw new Error(errorData.message || 'Failed to remove member.');
       }
 
-      // Redirect the user back to the homes page
-      router.push('/homes');
+      setLeaveSuccess(true);
+
+      setTimeout(() => {
+        router.push('/homes');
+      }, 1000);
     } catch (error) {
       console.error('Error leaving home:', error);
       setError('Failed to leave home. Please try again.');
@@ -150,6 +155,11 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
           <p>Loading home details...</p>
         ) : error ? (
           <p className="text-red-500">{error}</p>
+        ) : leaveSuccess ? (
+          <div className="text-center">
+            <p className="text-green-500 text-xl font-bold">You have successfully left the home!</p>
+            <p className="text-gray-300">Redirecting you to the homes page...</p>
+          </div>
         ) : (
           <>
             <p className="text-xl font-bold">Home Name: {homeName}</p>
@@ -168,7 +178,7 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
               )}
             </ul>
             <button
-              onClick={handleLeaveHome}
+              onClick={() => setShowConfirmation(true)} // Show confirmation modal on click
               className="w-full bg-red-600 hover:bg-red-700 transition p-2 rounded-md font-bold mt-4"
               disabled={isLeaving}
             >
@@ -177,6 +187,34 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
           </>
         )}
       </div>
+
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-96">
+            <h2 className="text-xl font-bold mb-2">Are you sure?</h2>
+            <p className="mb-4">
+              Do you really want to leave this home? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmation(false);
+                  handleLeaveHome();
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+              >
+                Leave Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

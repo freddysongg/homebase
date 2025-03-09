@@ -294,7 +294,7 @@ const Chore: React.FC = () => {
               >
                 <h3 className="text-lg font-bold">{chore.name}</h3>
                 {chore.description && (
-                  <p className="text-sm text-gray-300 mt-1">{chore.description}</p>
+                  <p className="text-sm text-gray-600 mt-1">{chore.description}</p>
                 )}
                 <p className="text-sm">
                   Assigned To:{' '}

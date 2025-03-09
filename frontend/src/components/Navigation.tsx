@@ -17,10 +17,10 @@ const Navbar: React.FC = () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decodedToken: { id?: string; userId?: string } = jwtDecode(token);
+        const decodedToken: { id?: string } = jwtDecode(token);
         console.log('Decoded Token:', decodedToken);
 
-        const userId = decodedToken.id || decodedToken.userId;
+        const userId = decodedToken.id;
         console.log('User ID from token:', userId);
 
         if (userId) {
