@@ -20,7 +20,7 @@ interface Expense {
   amount: number;
   category: 'rent' | 'utilities' | 'groceries' | 'household' | 'other';
   due_date: string;
-  status: 'pending' | 'settled';
+  status: 'pending' | 'paid';
   splits: Split[];
   created_by: { _id: string; name: string };
   household_id: string;
@@ -50,6 +50,7 @@ const Expense = () => {
   const [splitEvenly, setSplitEvenly] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [roommates, setRoommates] = useState<Roommate[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const fetchRoommates = async () => {
     try {
@@ -129,6 +130,14 @@ const Expense = () => {
     fetchRoommates();
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token) as { id: string };
+      setUserId(decodedToken.id);
+    }
+  }, []);
+
   const handleTotalAmountChange = (value: string) => {
     const numericValue = value.replace(/[^0-9.]/g, '');
     setTotalAmount(numericValue ? Number(numericValue) : '');
@@ -201,13 +210,46 @@ const Expense = () => {
     return true;
   };
 
-  // const handleMarkAsPaid = (expenseId: number) => {
-  //   setExpenses(
-  //     expenses.map((expense) =>
-  //       expense.id === expenseId ? { ...expense, status: 'settled' } : expense
-  //     )
-  //   );
-  // };
+  const handleMarkAsSettled = async (expenseId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found, user not logged in.');
+      }
+
+      console.log('Marking expense as settled:', expenseId); // Debugging
+
+      const response = await fetch(`http://localhost:5001/api/expenses/${expenseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'paid' }) // Send the updated status
+      });
+
+      console.log('Response:', response); // Debugging
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error marking expense as settled:', errorData); // Debugging
+        throw new Error(errorData.message || 'Failed to mark expense as settled');
+      }
+
+      const updatedExpense = await response.json();
+      console.log('Updated expense:', updatedExpense); // Debugging
+
+      // Update the local state
+      setExpenses(
+        expenses.map((expense) =>
+          expense._id === expenseId ? { ...expense, status: 'paid' } : expense
+        )
+      );
+    } catch (error) {
+      console.error('Error marking expense as settled:', error); // Debugging
+      setErrorMessage('Failed to mark expense as settled. Please try again.');
+    }
+  };
 
   const handleAddExpense = async () => {
     if (!validateExpense()) return;
@@ -415,7 +457,9 @@ const Expense = () => {
             expenses.map((expense) => (
               <div
                 key={expense._id}
-                className="p-4 border rounded-lg border-gray-800 bg-white text-black"
+                className={`p-4 border rounded-lg ${
+                  expense.status === 'paid' ? 'bg-gray-100 text-gray-500' : 'bg-white text-black'
+                }`}
               >
                 <h3 className="text-xl font-bold">{expense.title}</h3>
                 <p>{expense.description}</p>
@@ -423,6 +467,7 @@ const Expense = () => {
                 <p>Status: {expense.status}</p>
                 <p>Category: {expense.category}</p>
                 <p>Due Date: {new Date(expense.due_date).toLocaleDateString()}</p>
+                <p>Created By: {expense.created_by.name}</p>
                 <div className="mt-2">
                   <h4 className="font-semibold">Split Among:</h4>
                   {expense.splits.map((split, index) => (
@@ -431,6 +476,16 @@ const Expense = () => {
                     </div>
                   ))}
                 </div>
+                {expense.status !== 'paid' && userId === expense.created_by._id && (
+                  <div className="mt-2">
+                    <button
+                      onClick={() => handleMarkAsSettled(expense._id)}
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
+                    >
+                      Mark as Settled
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           ) : (
