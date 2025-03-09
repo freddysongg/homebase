@@ -237,6 +237,11 @@ const Homes = () => {
 
       // Step 3: Show success message
       setSuccessMessage(`Successfully joined home: ${data.data.name}`);
+
+      setTimeout(() => {
+        router.push(`/homes/${joinCode}`);
+      }, 1000);
+
       setJoinCode(''); // Clear the join code input
     } catch (error) {
       console.error('Error joining home:', error);
