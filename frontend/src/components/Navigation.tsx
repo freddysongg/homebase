@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null); // State to store the user's name
+  const [userName, setUserName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="hover:text-blue-400 transition"
               >
-                {userName || 'User'} ▼ {/* Display the user's name if available */}
+                {userName || 'User'} ▼
               </button>
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
