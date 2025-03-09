@@ -119,19 +119,18 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           homeCode,
-          userId,
-        }),
+          userId
+        })
       });
 
       if (!userResponse.ok) {
         const errorData = await userResponse.json();
         throw new Error(errorData.message || 'Failed to remove member.');
       }
-
 
       // Redirect the user back to the homes page
       router.push('/homes');

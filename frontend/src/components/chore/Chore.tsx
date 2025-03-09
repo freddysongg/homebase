@@ -108,14 +108,11 @@ const Chore: React.FC = () => {
         throw new Error('Token or household ID not found.');
       }
 
-      const householdResponse = await fetch(
-        `http://localhost:5001/api/households/${householdId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
+      });
 
       if (!householdResponse.ok) {
         throw new Error('Failed to fetch household details');
@@ -177,7 +174,7 @@ const Chore: React.FC = () => {
       const data = await response.json();
       setChores([...chores, data.data]);
       setSuccessMessage('Chore created successfully!');
-      
+
       // Reset form
       setTitle('');
       setDescription('');
@@ -228,13 +225,11 @@ const Chore: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg my-8">
       <h1 className="text-3xl font-bold mb-6 text-center">Chore Management</h1>
-      
+
       {successMessage && (
         <div className="mb-4 p-2 bg-green-500 text-white rounded">{successMessage}</div>
       )}
-      {error && (
-        <div className="mb-4 p-2 bg-red-500 text-white rounded">{error}</div>
-      )}
+      {error && <div className="mb-4 p-2 bg-red-500 text-white rounded">{error}</div>}
 
       <div className="mb-6 p-4 text-black rounded-lg">
         <h2 className="text-xl text-white font-semibold mb-3">Add Chore</h2>
@@ -263,7 +258,7 @@ const Chore: React.FC = () => {
           multiple
           value={assignedTo}
           onChange={(e) => {
-            const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+            const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value);
             setAssignedTo(selectedOptions);
           }}
           className="w-full p-2 mb-2 rounded-md border border-gray-600 focus:ring focus:ring-blue-500"
@@ -311,13 +306,15 @@ const Chore: React.FC = () => {
                 <p className="text-sm text-gray-400">
                   Due Date: {new Date(chore.due_date).toLocaleDateString()}
                 </p>
-                <p className={`text-sm ${
-                  chore.status === 'completed' 
-                    ? 'text-green-400' 
-                    : chore.status === 'in-progress' 
-                    ? 'text-blue-400' 
-                    : 'text-yellow-400'
-                }`}>
+                <p
+                  className={`text-sm ${
+                    chore.status === 'completed'
+                      ? 'text-green-400'
+                      : chore.status === 'in-progress'
+                        ? 'text-blue-400'
+                        : 'text-yellow-400'
+                  }`}
+                >
                   Status: {chore.status.charAt(0).toUpperCase() + chore.status.slice(1)}
                 </p>
 
