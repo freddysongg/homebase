@@ -288,7 +288,7 @@ const Chore: React.FC = () => {
             {chores.map((chore) => (
               <div
                 key={chore._id}
-                className={`p-4 bg-gray-800 rounded-lg shadow-md ${
+                className={`p-4 bg-white text-black rounded-lg shadow-md ${
                   chore.status === 'completed' ? 'opacity-50' : ''
                 }`}
               >
@@ -296,16 +296,14 @@ const Chore: React.FC = () => {
                 {chore.description && (
                   <p className="text-sm text-gray-300 mt-1">{chore.description}</p>
                 )}
-                <p className="text-sm text-gray-400">
+                <p className="text-sm">
                   Assigned To:{' '}
                   {householdMembers
                     .filter((member) => chore.assigned_to.includes(member._id))
                     .map((member) => member.name)
                     .join(', ')}
                 </p>
-                <p className="text-sm text-gray-400">
-                  Due Date: {new Date(chore.due_date).toLocaleDateString()}
-                </p>
+                <p className="text-sm">Due Date: {new Date(chore.due_date).toLocaleDateString()}</p>
                 <p
                   className={`text-sm ${
                     chore.status === 'completed'

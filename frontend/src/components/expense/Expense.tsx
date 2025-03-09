@@ -186,7 +186,6 @@ const Expense = () => {
   const validateExpense = () => {
     if (
       !title ||
-      !description ||
       totalAmount === '' ||
       !paidBy ||
       splitAmong.length === 0 ||
@@ -330,7 +329,7 @@ const Expense = () => {
 
         <input
           type="text"
-          placeholder="Description"
+          placeholder="Description (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
@@ -464,7 +463,13 @@ const Expense = () => {
                 <h3 className="text-xl font-bold">{expense.title}</h3>
                 <p>{expense.description}</p>
                 <p className="text-lg font-semibold">Total: ${expense.amount}</p>
-                <p>Status: {expense.status}</p>
+                <p
+                  className={`text-lg font-semibold ${
+                    expense.status === 'pending' ? 'text-red-500' : 'text-green-500'
+                  }`}
+                >
+                  Status: {expense.status}
+                </p>
                 <p>Category: {expense.category}</p>
                 <p>Due Date: {new Date(expense.due_date).toLocaleDateString()}</p>
                 <p>Created By: {expense.created_by.name}</p>
@@ -480,7 +485,7 @@ const Expense = () => {
                   <div className="mt-2">
                     <button
                       onClick={() => handleMarkAsSettled(expense._id)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
+                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
                     >
                       Mark as Settled
                     </button>
