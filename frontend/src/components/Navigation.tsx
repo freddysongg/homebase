@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 
 const Navbar: React.FC = () => {
@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   const fetchUserDetails = async () => {
     const token = localStorage.getItem('token');
@@ -94,16 +95,44 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-16">
           {isLoggedIn && (
             <>
-              <Link href="/homes" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+              <Link
+                href="/dashboard"
+                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                  pathname === '/dashboard' ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/homes"
+                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                  pathname === '/homes' ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}
+              >
                 Homes
               </Link>
-              <Link href="/expense" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+              <Link
+                href="/expense"
+                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                  pathname === '/expense' ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}
+              >
                 Expenses
               </Link>
-              <Link href="/chore" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+              <Link
+                href="/chore"
+                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                  pathname === '/chore' ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}
+              >
                 Chores
               </Link>
-              <Link href="/usettings" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+              <Link
+                href="/usettings"
+                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                  pathname === '/usettings' ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}
+              >
                 Settings
               </Link>
             </>
