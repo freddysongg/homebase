@@ -49,14 +49,15 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
     date.setDate(date.getDate() - i);
     date.setHours(0, 0, 0, 0);
     
-    const dayChores = chores.filter(chore => {
+    // Get all chores due on or before this date
+    const relevantChores = chores.filter(chore => {
       const choreDate = new Date(chore.due_date);
       choreDate.setHours(0, 0, 0, 0);
-      return choreDate.getTime() === date.getTime();
+      return choreDate.getTime() <= date.getTime();
     });
 
-    const completed = dayChores.filter(chore => chore.status === 'completed').length;
-    const total = dayChores.length;
+    const completed = relevantChores.filter(chore => chore.status === 'completed').length;
+    const total = relevantChores.length;
     const completionRate = total > 0 ? (completed / total) * 100 : 0;
 
     return {
@@ -64,16 +65,6 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
       rate: completionRate
     };
   }).reverse();
-
-  // Calculate workload distribution (only for active chores)
-  const memberWorkload = chores
-    .filter(chore => chore.status !== 'completed')
-    .reduce((acc, chore) => {
-      chore.assigned_to.forEach(member => {
-        acc[member.name] = (acc[member.name] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
 
   const statusData = {
     labels: ['Pending', 'In Progress', 'Completed'],
@@ -175,33 +166,6 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
         <div className="bg-white dark:bg-dark-secondary p-4 rounded-lg shadow">
           <Line data={trendData} options={lineOptions} />
         </div>
-      </div>
-      <div className="bg-white dark:bg-dark-secondary p-4 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Member Workload</h3>
-        {Object.keys(memberWorkload).length > 0 ? (
-          <div className="space-y-2">
-            {Object.entries(memberWorkload).map(([member, count]) => (
-              <div key={member} className="flex items-center">
-                <div className="w-32 text-sm text-gray-600 dark:text-gray-300">{member}</div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 dark:bg-blue-600"
-                      style={{
-                        width: `${(count / Math.max(...Object.values(memberWorkload))) * 100}%`
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="w-12 text-right text-sm text-gray-600 dark:text-gray-300">
-                  {count}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">No active chores assigned</p>
-        )}
       </div>
     </div>
   );
