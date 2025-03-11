@@ -25,7 +25,11 @@ interface Expense {
   created_by: { _id: string; name: string };
   household_id: string;
   receipt_url: string;
-  recurring: { is_recurring: boolean };
+  recurring: {
+    is_recurring: boolean;
+    frequency: 'weekly' | 'monthly' | 'yearly' | null;
+    end_date: string | null;
+  };
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -48,6 +52,9 @@ const Expense = () => {
   const [dueDate, setDueDate] = useState('');
   const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
   const [splitEvenly, setSplitEvenly] = useState(true);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<'weekly' | 'monthly' | 'yearly' | null>(null);
+  const [recurringEndDate, setRecurringEndDate] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState('');
   const [roommates, setRoommates] = useState<Roommate[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -269,7 +276,11 @@ const Expense = () => {
           amount: Number(entry.amount)
         };
       }),
-      recurring: null,
+      recurring: {
+        is_recurring: isRecurring,
+        frequency: isRecurring ? recurringFrequency : null,
+        end_date: isRecurring ? recurringEndDate : null
+      },
       receipt_url: ''
     };
 
@@ -441,6 +452,50 @@ const Expense = () => {
           + Add User
         </button>
 
+        <div className="space-y-4 mt-4 mb-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => {
+                setIsRecurring(e.target.checked);
+                if (!e.target.checked) {
+                  setRecurringFrequency(null);
+                  setRecurringEndDate('');
+                }
+              }}
+              className="w-4 h-4"
+            />
+            <span>Make Recurring</span>
+          </label>
+
+          {isRecurring && (
+            <div className="space-y-2 pl-6">
+              <select
+                value={recurringFrequency || ''}
+                onChange={(e) => setRecurringFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')}
+                className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+              >
+                <option value="">Select Frequency</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={recurringEndDate}
+                  onChange={(e) => setRecurringEndDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleAddExpense}
           className="w-full mt-4 bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold"
@@ -463,6 +518,15 @@ const Expense = () => {
                 <h3 className="text-xl font-bold">{expense.title}</h3>
                 <p>{expense.description}</p>
                 <p className="text-lg font-semibold">Total: ${expense.amount}</p>
+                {expense.recurring?.is_recurring && (
+                  <p className="text-sm text-purple-600">
+                    <span className="font-semibold">Recurring: </span>
+                    {expense.recurring.frequency?.charAt(0).toUpperCase() + expense.recurring.frequency?.slice(1)}
+                    {expense.recurring.end_date &&
+                      ` until ${new Date(expense.recurring.end_date).toLocaleDateString()}`
+                    }
+                  </p>
+                )}
                 <p
                   className={`text-lg font-semibold ${
                     expense.status === 'pending' ? 'text-red-500' : 'text-green-500'

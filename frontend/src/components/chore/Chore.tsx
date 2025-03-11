@@ -12,6 +12,11 @@ interface ChoreType {
   status: 'pending' | 'in-progress' | 'completed';
   household_id: string;
   rotation: boolean;
+  recurring: {
+    is_recurring: boolean;
+    frequency: 'daily' | 'weekly' | 'monthly' | null;
+    end_date: string | null;
+  };
 }
 
 interface User {
@@ -25,6 +30,10 @@ const Chore: React.FC = () => {
   const [description, setDescription] = useState('');
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState('');
+  const [isRotation, setIsRotation] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
+  const [recurringEndDate, setRecurringEndDate] = useState<string>('');
   const [householdMembers, setHouseholdMembers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,7 +171,12 @@ const Chore: React.FC = () => {
           due_date: dueDate,
           status: 'pending',
           household_id: householdId,
-          rotation: false
+          rotation: isRotation,
+          recurring: {
+            is_recurring: isRecurring,
+            frequency: isRecurring ? recurringFrequency : null,
+            end_date: isRecurring ? recurringEndDate : null
+          }
         })
       });
 
@@ -269,7 +283,63 @@ const Chore: React.FC = () => {
             </option>
           ))}
         </select>
-        <p className="text-white text-sm mb-2">Hold Ctrl/Cmd to select multiple people</p>
+        <p className="text-white text-sm mb-4">Hold Ctrl/Cmd to select multiple people</p>
+
+        <div className="space-y-4 mb-4">
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={isRotation}
+                onChange={(e) => setIsRotation(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-white">Enable Rotation</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => {
+                  setIsRecurring(e.target.checked);
+                  if (!e.target.checked) {
+                    setRecurringFrequency(null);
+                    setRecurringEndDate('');
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <span className="text-white">Make Recurring</span>
+            </label>
+          </div>
+
+          {isRecurring && (
+            <div className="space-y-2">
+              <select
+                value={recurringFrequency || ''}
+                onChange={(e) => setRecurringFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+              >
+                <option value="">Select Frequency</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+
+              <div>
+                <label className="block text-sm text-white font-medium mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={recurringEndDate}
+                  onChange={(e) => setRecurringEndDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleAddChore}
           disabled={isLoading}
@@ -304,6 +374,20 @@ const Chore: React.FC = () => {
                     .join(', ')}
                 </p>
                 <p className="text-sm">Due Date: {new Date(chore.due_date).toLocaleDateString()}</p>
+                {chore.rotation && (
+                  <p className="text-sm text-blue-600 font-semibold">
+                    Rotation Enabled
+                  </p>
+                )}
+                {chore.recurring?.is_recurring && (
+                  <p className="text-sm text-purple-600">
+                    <span className="font-semibold">Recurring: </span>
+                    {chore.recurring.frequency?.charAt(0).toUpperCase() + chore.recurring.frequency?.slice(1)}
+                    {chore.recurring.end_date &&
+                      ` until ${new Date(chore.recurring.end_date).toLocaleDateString()}`
+                    }
+                  </p>
+                )}
                 <p
                   className={`text-sm ${
                     chore.status === 'completed'

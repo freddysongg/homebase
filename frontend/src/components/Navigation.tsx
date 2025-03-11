@@ -86,24 +86,24 @@ const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className="bg-black text-white p-4">
+    <nav className="bg-white dark:bg-dark-primary text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-dark-border">
       <div className="max-w-7xl mx-20 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold">
+        <Link href="/" className="text-2xl font-bold hover:text-blue-600 dark:hover:text-blue-400">
           HomeBase
         </Link>
         <div className="hidden md:flex flex-grow justify-center space-x-16">
           {isLoggedIn && (
             <>
-              <Link href="/homes" className="hover:text-blue-400 transition">
+              <Link href="/homes" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                 Homes
               </Link>
-              <Link href="/expense" className="hover:text-blue-400 transition">
+              <Link href="/expense" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                 Expenses
               </Link>
-              <Link href="/chore" className="hover:text-blue-400 transition">
+              <Link href="/chore" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                 Chores
               </Link>
-              <Link href="/usettings" className="hover:text-blue-400 transition">
+              <Link href="/usettings" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                 Settings
               </Link>
             </>
@@ -119,11 +119,11 @@ const Navbar: React.FC = () => {
                 {userName || 'User'} ▼
               </button>
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-dark-secondary ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1">
                     <button
                       onClick={handleLogout}
-                      className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-primary"
                     >
                       Logout
                     </button>
