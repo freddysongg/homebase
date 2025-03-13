@@ -86,7 +86,8 @@ const Homes = () => {
           console.log('Household Data:', householdData); // Debugging: Log household data
 
           // Redirect to HomeDetails using the homeCode
-          router.push(`/homes/${householdData.data.house_code}`);
+          // router.push(`/homes/${householdData.data.house_code}`);
+          window.location.replace(`/homes/${householdData.data.house_code}`);
         }
       } catch (error) {
         console.error('Error checking user home:', error);
@@ -187,7 +188,8 @@ const Homes = () => {
       }
 
       // Step 3: Redirect to HomeDetails using homeCode
-      router.push(`/homes/${homeData.house_code}`);
+      // router.push(`/homes/${homeData.house_code}`);
+      window.location.replace(`/homes/${homeData.house_code}`);
     } catch (error) {
       console.error('Error creating home:', error);
       const err = error as Error;
@@ -241,7 +243,8 @@ const Homes = () => {
       setSuccessMessage(`Successfully joined home: ${data.data.name}`);
 
       setTimeout(() => {
-        router.push(`/homes/${joinCode}`);
+        // router.push(`/homes/${joinCode}`);
+        window.location.replace(`/homes/${joinCode}`);
       }, 1000);
 
       setJoinCode(''); // Clear the join code input

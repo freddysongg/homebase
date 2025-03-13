@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/components/ThemeProvider';
 
 const HomeDetails = ({ homeCode }: { homeCode: string }) => {
+  const { theme } = useTheme();
   const [homeName, setHomeName] = useState<string | null>(null);
   const [homeAddress, setHomeAddress] = useState<{
     street: string;
@@ -137,7 +139,8 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
       setLeaveSuccess(true);
 
       setTimeout(() => {
-        router.push('/homes');
+        // router.push('/homes');
+        window.location.replace('/homes');
       }, 1000);
     } catch (error) {
       console.error('Error leaving home:', error);
@@ -149,7 +152,10 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white">
-      <h1 className="text-4xl font-bold mb-6 text-black">Home Details</h1>
+      <h1 className={`text-4xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+        Home Details
+      </h1>
+
       <div className="bg-black p-6 rounded-lg shadow-md w-96">
         {isLoading ? (
           <p>Loading home details...</p>

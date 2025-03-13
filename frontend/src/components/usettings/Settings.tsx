@@ -13,7 +13,7 @@ interface UserProfile {
     notifications: {
       inApp: boolean;
     };
-    theme: 'light' | 'dark' | 'system';
+    theme: 'light' | 'dark';
   };
 }
 
@@ -26,7 +26,7 @@ const Settings = () => {
     notifications: {
       inApp: true
     },
-    theme: 'system' as 'light' | 'dark' | 'system'
+    theme: 'system' as 'light' | 'dark'
   });
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -77,7 +77,7 @@ const Settings = () => {
           notifications: {
             inApp: true
           },
-          theme: 'system'
+          theme: 'dark'
         }
       );
     } catch (error) {
@@ -218,15 +218,6 @@ const Settings = () => {
                 className="w-4 h-4 text-blue-500 dark:text-blue-400"
               />
               <span>Dark</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                checked={preferences.theme === 'system'}
-                onChange={() => setPreferences({ ...preferences, theme: 'system' })}
-                className="w-4 h-4 text-blue-500 dark:text-blue-400"
-              />
-              <span>System</span>
             </label>
           </div>
         </div>
