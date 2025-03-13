@@ -26,11 +26,7 @@ const formSchema = z.object({
 });
 
 const joinFormSchema = z.object({
-  code: z
-    .string()
-    .min(6, 'Home code must be 6 characters')
-    .max(6, 'Home code must be 6 characters')
-    .transform((val) => val.toUpperCase())
+  code: z.string().min(6, 'Home code must be 6 characters').max(6, 'Home code must be 6 characters')
 });
 
 interface Home {
@@ -255,7 +251,12 @@ const Homes = () => {
     }
   };
 
-  const onJoinSubmit = async (values: z.infer<typeof joinFormSchema>) => {
+  const handleJoinHome = async (values: z.infer<typeof joinFormSchema>) => {
+    if (!values.code.trim()) {
+      setError('Please enter a valid home code.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
@@ -266,35 +267,20 @@ const Homes = () => {
         throw new Error('Token not found. Please log in again.');
       }
 
+      // Get user ID from token
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
 
-      // First verify if the household exists with this code
-      const verifyResponse = await fetch(
-        `http://localhost:5001/api/households/verify/${values.code.toUpperCase()}`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!verifyResponse.ok) {
-        const errorData = await verifyResponse.json();
-        throw new Error(errorData.message || 'Invalid home code');
-      }
-
-      // Then add member to household
-      const response = await fetch(`http://localhost:5001/api/households/leaveHousehold`, {
+      // Send join request directly without verification
+      const response = await fetch('http://localhost:5001/api/households/members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          homeCode: values.code.toUpperCase(),
-          userId
+          homeCode: values.code, // Use homeCode instead of house_code
+          userId // Use userId instead of user_id
         })
       });
 
@@ -306,8 +292,11 @@ const Homes = () => {
       const data = await response.json();
       setSuccessMessage(`Successfully joined home: ${data.data.name}`);
 
+      // Clear the form
+      joinForm.reset();
+
       setTimeout(() => {
-        window.location.replace('/dashboard');
+        window.location.replace(`/homes/${values.code}`); // Redirect to home details
       }, 1000);
     } catch (error) {
       console.error('Error joining home:', error);
@@ -376,7 +365,7 @@ const Homes = () => {
           </CardHeader>
           <CardContent>
             <Form {...joinForm}>
-              <form onSubmit={joinForm.handleSubmit(onJoinSubmit)} className="space-y-6">
+              <form onSubmit={joinForm.handleSubmit(handleJoinHome)} className="space-y-6">
                 <FormField
                   control={joinForm.control}
                   name="code"
