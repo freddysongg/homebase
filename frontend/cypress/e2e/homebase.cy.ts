@@ -19,6 +19,12 @@ describe('HomeBase App Navigation and Backend Check', () => {
     cy.contains('User').should('be.visible');
     });
 
+    it('should navigate to the Dashboard page', () => {
+      cy.visit('/dashboard');
+      cy.url().should('include', '/dashboard');
+      cy.contains('Dashboard').should('be.visible');
+    });
+
   it('should navigate to the Homes page', () => {
     cy.visit('/homes');
     cy.url().should('include', '/homes');
