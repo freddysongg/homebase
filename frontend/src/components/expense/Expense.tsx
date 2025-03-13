@@ -53,7 +53,9 @@ const Expense = () => {
   const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
   const [splitEvenly, setSplitEvenly] = useState(true);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringFrequency, setRecurringFrequency] = useState<'weekly' | 'monthly' | 'yearly' | null>(null);
+  const [recurringFrequency, setRecurringFrequency] = useState<
+    'weekly' | 'monthly' | 'yearly' | null
+  >(null);
   const [recurringEndDate, setRecurringEndDate] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState('');
   const [roommates, setRoommates] = useState<Roommate[]>([]);
@@ -83,7 +85,7 @@ const Expense = () => {
       const userData = await userResponse.json();
       const householdId = userData.data?.household_id;
 
-      if (!householdId) throw new Error('User is not associated with any household');
+      // if (!householdId) throw new Error('User is not associated with any household');
 
       const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
         method: 'GET',
@@ -473,7 +475,9 @@ const Expense = () => {
             <div className="space-y-2 pl-6">
               <select
                 value={recurringFrequency || ''}
-                onChange={(e) => setRecurringFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')}
+                onChange={(e) =>
+                  setRecurringFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')
+                }
                 className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
               >
                 <option value="">Select Frequency</option>
@@ -521,10 +525,10 @@ const Expense = () => {
                 {expense.recurring?.is_recurring && (
                   <p className="text-sm text-purple-600">
                     <span className="font-semibold">Recurring: </span>
-                    {expense.recurring.frequency?.charAt(0).toUpperCase() + expense.recurring.frequency?.slice(1)}
+                    {expense.recurring.frequency?.charAt(0).toUpperCase() +
+                      expense.recurring.frequency?.slice(1)}
                     {expense.recurring.end_date &&
-                      ` until ${new Date(expense.recurring.end_date).toLocaleDateString()}`
-                    }
+                      ` until ${new Date(expense.recurring.end_date).toLocaleDateString()}`}
                   </p>
                 )}
                 <p

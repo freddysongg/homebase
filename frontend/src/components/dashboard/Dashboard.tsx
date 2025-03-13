@@ -62,9 +62,9 @@ const Dashboard = () => {
       const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (!userResponse.ok) throw new Error('Failed to fetch user data');
-      
+
       const userData = await userResponse.json();
       const householdId = userData.data.household_id;
 
@@ -77,9 +77,9 @@ const Dashboard = () => {
       const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (!householdResponse.ok) throw new Error('Failed to fetch household data');
-      
+
       const householdData = await householdResponse.json();
       setHousehold(householdData.data);
 
@@ -87,9 +87,9 @@ const Dashboard = () => {
       const choresResponse = await fetch('http://localhost:5001/api/chores', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (!choresResponse.ok) throw new Error('Failed to fetch chores');
-      
+
       const choresData = await choresResponse.json();
       setChores(choresData.data);
 
@@ -97,12 +97,11 @@ const Dashboard = () => {
       const expensesResponse = await fetch('http://localhost:5001/api/expenses', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (!expensesResponse.ok) throw new Error('Failed to fetch expenses');
-      
+
       const expensesData = await expensesResponse.json();
       setExpenses(expensesData.data);
-
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data');
@@ -120,11 +119,7 @@ const Dashboard = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-center text-red-500 p-4">
-        {error}
-      </div>
-    );
+    return <div className="text-center text-red-500 p-4">{error}</div>;
   }
 
   if (!household) {
@@ -137,7 +132,7 @@ const Dashboard = () => {
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const pendingExpenses = expenses
-    .filter(expense => expense.status === 'pending')
+    .filter((expense) => expense.status === 'pending')
     .reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
@@ -185,84 +180,118 @@ const Dashboard = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Expenses</h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">${totalExpenses.toFixed(2)}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Total Expenses
+              </h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ${totalExpenses.toFixed(2)}
+              </p>
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 Pending: ${pendingExpenses.toFixed(2)}
               </div>
             </div>
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Chores</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Active Chores
+              </h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {chores.filter(chore => chore.status !== 'completed').length}
+                {chores.filter((chore) => chore.status !== 'completed').length}
               </p>
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 Total: {chores.length}
               </div>
             </div>
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Household Members</h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{household.members.length}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Household Members
+              </h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {household.members.length}
+              </p>
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Active Today: {household.members.filter(m => m.lastActive && new Date(m.lastActive).toDateString() === new Date().toDateString()).length}
+                Active Today:{' '}
+                {
+                  household.members.filter(
+                    (m) =>
+                      m.lastActive &&
+                      new Date(m.lastActive).toDateString() === new Date().toDateString()
+                  ).length
+                }
               </div>
             </div>
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Completion Rate</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Completion Rate
+              </h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {chores.length > 0
-                  ? `${((chores.filter(c => c.status === 'completed').length / chores.length) * 100).toFixed(1)}%`
+                  ? `${((chores.filter((c) => c.status === 'completed').length / chores.length) * 100).toFixed(1)}%`
                   : '0%'}
               </p>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Last 7 days
-              </div>
+              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">Last 7 days</div>
             </div>
           </div>
 
           {/* Recent Activity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Recent Expenses</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Recent Expenses
+              </h2>
               <div className="space-y-4">
-                {expenses.slice(0, 5).map(expense => (
+                {expenses.slice(0, 5).map((expense) => (
                   <div key={expense._id} className="flex justify-between items-center">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{expense.title}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{expense.created_by.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {expense.created_by.name}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900 dark:text-white">${expense.amount}</p>
-                      <p className={`text-sm ${
-                        expense.status === 'paid' ? 'text-green-500' : 'text-red-500'
-                      }`}>{expense.status}</p>
+                      <p
+                        className={`text-sm ${
+                          expense.status === 'paid' ? 'text-green-500' : 'text-red-500'
+                        }`}
+                      >
+                        {expense.status}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Upcoming Chores</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                Upcoming Chores
+              </h2>
               <div className="space-y-4">
                 {chores
-                  .filter(chore => chore.status !== 'completed')
+                  .filter((chore) => chore.status !== 'completed')
                   .slice(0, 5)
-                  .map(chore => (
+                  .map((chore) => (
                     <div key={chore._id} className="flex justify-between items-center">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">{chore.name}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {chore.assigned_to.map(user => user.name).join(', ')}
+                          {chore.assigned_to.map((user) => user.name).join(', ')}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(chore.due_date).toLocaleDateString()}
                         </p>
-                        <p className={`text-sm ${
-                          chore.status === 'completed' ? 'text-green-500' :
-                          chore.status === 'in-progress' ? 'text-blue-500' : 'text-yellow-500'
-                        }`}>{chore.status}</p>
+                        <p
+                          className={`text-sm ${
+                            chore.status === 'completed'
+                              ? 'text-green-500'
+                              : chore.status === 'in-progress'
+                                ? 'text-blue-500'
+                                : 'text-yellow-500'
+                          }`}
+                        >
+                          {chore.status}
+                        </p>
                       </div>
                     </div>
                   ))}

@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/components/ThemeProvider';
 
 const generateHomeCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
 const Homes = () => {
+  const { theme } = useTheme();
   const [homeName, setHomeName] = useState('');
   const [homeAddress, setHomeAddress] = useState({
     street: '',
@@ -254,7 +256,9 @@ const Homes = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white my-10">
-      <h1 className="text-4xl font-bold mb-6 text-black">Manage Your Home</h1>
+      <h1 className={`text-4xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+        Manage Your Home
+      </h1>
 
       {successMessage && (
         <p className="mb-4 p-2 bg-green-500 text-white rounded">{successMessage}</p>

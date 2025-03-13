@@ -32,7 +32,9 @@ const Chore: React.FC = () => {
   const [dueDate, setDueDate] = useState('');
   const [isRotation, setIsRotation] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringFrequency, setRecurringFrequency] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
+  const [recurringFrequency, setRecurringFrequency] = useState<
+    'daily' | 'weekly' | 'monthly' | null
+  >(null);
   const [recurringEndDate, setRecurringEndDate] = useState<string>('');
   const [householdMembers, setHouseholdMembers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -317,7 +319,9 @@ const Chore: React.FC = () => {
             <div className="space-y-2">
               <select
                 value={recurringFrequency || ''}
-                onChange={(e) => setRecurringFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                onChange={(e) =>
+                  setRecurringFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')
+                }
                 className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
               >
                 <option value="">Select Frequency</option>
@@ -375,17 +379,15 @@ const Chore: React.FC = () => {
                 </p>
                 <p className="text-sm">Due Date: {new Date(chore.due_date).toLocaleDateString()}</p>
                 {chore.rotation && (
-                  <p className="text-sm text-blue-600 font-semibold">
-                    Rotation Enabled
-                  </p>
+                  <p className="text-sm text-blue-600 font-semibold">Rotation Enabled</p>
                 )}
                 {chore.recurring?.is_recurring && (
                   <p className="text-sm text-purple-600">
                     <span className="font-semibold">Recurring: </span>
-                    {chore.recurring.frequency?.charAt(0).toUpperCase() + chore.recurring.frequency?.slice(1)}
+                    {chore.recurring.frequency?.charAt(0).toUpperCase() +
+                      chore.recurring.frequency?.slice(1)}
                     {chore.recurring.end_date &&
-                      ` until ${new Date(chore.recurring.end_date).toLocaleDateString()}`
-                    }
+                      ` until ${new Date(chore.recurring.end_date).toLocaleDateString()}`}
                   </p>
                 )}
                 <p

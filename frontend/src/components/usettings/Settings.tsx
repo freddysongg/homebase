@@ -72,12 +72,14 @@ const Settings = () => {
       setProfile(userProfile);
       setName(userProfile.name);
       setEmail(userProfile.email);
-      setPreferences(userProfile.preferences || {
-        notifications: {
-          inApp: true
-        },
-        theme: 'system'
-      });
+      setPreferences(
+        userProfile.preferences || {
+          notifications: {
+            inApp: true
+          },
+          theme: 'system'
+        }
+      );
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setError('Failed to fetch user profile. Please try again.');
@@ -121,10 +123,15 @@ const Settings = () => {
       const updatedProfile = await response.json();
       setProfile(updatedProfile.data);
       setSuccessMessage('Profile updated successfully!');
-      
+      location.reload();
+
       // Only show in-app notification for settings update
       if (preferences.notifications.inApp) {
-        notificationService.sendNotification('inApp', 'Settings Updated', 'Your settings have been saved successfully');
+        notificationService.sendNotification(
+          'inApp',
+          'Settings Updated',
+          'Your settings have been saved successfully'
+        );
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -198,7 +205,7 @@ const Settings = () => {
               <input
                 type="radio"
                 checked={preferences.theme === 'light'}
-                onChange={() => setPreferences({...preferences, theme: 'light'})}
+                onChange={() => setPreferences({ ...preferences, theme: 'light' })}
                 className="w-4 h-4 text-blue-500 dark:text-blue-400"
               />
               <span>Light</span>
@@ -207,7 +214,7 @@ const Settings = () => {
               <input
                 type="radio"
                 checked={preferences.theme === 'dark'}
-                onChange={() => setPreferences({...preferences, theme: 'dark'})}
+                onChange={() => setPreferences({ ...preferences, theme: 'dark' })}
                 className="w-4 h-4 text-blue-500 dark:text-blue-400"
               />
               <span>Dark</span>
@@ -216,7 +223,7 @@ const Settings = () => {
               <input
                 type="radio"
                 checked={preferences.theme === 'system'}
-                onChange={() => setPreferences({...preferences, theme: 'system'})}
+                onChange={() => setPreferences({ ...preferences, theme: 'system' })}
                 className="w-4 h-4 text-blue-500 dark:text-blue-400"
               />
               <span>System</span>

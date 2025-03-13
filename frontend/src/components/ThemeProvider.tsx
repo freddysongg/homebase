@@ -80,10 +80,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     // Remove both classes first
     root.classList.remove('light', 'dark');
-    
+
     // Apply appropriate theme
     if (theme === 'system') {
       root.classList.add(systemTheme ? 'dark' : 'light');
@@ -112,9 +112,5 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 };

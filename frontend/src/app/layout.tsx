@@ -28,14 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen dark:bg-gray-900 dark:text-white transition-colors`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen dark:bg-gray-900 dark:text-white transition-colors`}
+      >
         <SessionProviderWrapper>
           <ThemeProvider>
             <div className="flex flex-col min-h-screen">
               <Navigation />
-              <main className="flex-grow">
-                {children}
-              </main>
+              <main className="flex-grow">{children}</main>
               <Footer />
             </div>
           </ThemeProvider>

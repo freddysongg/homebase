@@ -38,25 +38,28 @@ interface ChoreChartProps {
 
 const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
   // Calculate status distribution
-  const statusCounts = chores.reduce((acc, chore) => {
-    acc[chore.status] = (acc[chore.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const statusCounts = chores.reduce(
+    (acc, chore) => {
+      acc[chore.status] = (acc[chore.status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   // Calculate completion rate over time (last 7 days)
   const completionTrend = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - i);
     date.setHours(0, 0, 0, 0);
-    
+
     // Get all chores due on or before this date
-    const relevantChores = chores.filter(chore => {
+    const relevantChores = chores.filter((chore) => {
       const choreDate = new Date(chore.due_date);
       choreDate.setHours(0, 0, 0, 0);
       return choreDate.getTime() <= date.getTime();
     });
 
-    const completed = relevantChores.filter(chore => chore.status === 'completed').length;
+    const completed = relevantChores.filter((chore) => chore.status === 'completed').length;
     const total = relevantChores.length;
     const completionRate = total > 0 ? (completed / total) * 100 : 0;
 
@@ -80,27 +83,23 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
           'rgba(54, 162, 235, 0.6)',
           'rgba(75, 192, 192, 0.6)'
         ],
-        borderColor: [
-          'rgba(255, 206, 86, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(75, 192, 192, 1)'
-        ],
-        borderWidth: 1,
-      },
-    ],
+        borderColor: ['rgba(255, 206, 86, 1)', 'rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)'],
+        borderWidth: 1
+      }
+    ]
   };
 
   const trendData = {
-    labels: completionTrend.map(item => item.date),
+    labels: completionTrend.map((item) => item.date),
     datasets: [
       {
         label: 'Completion Rate (%)',
-        data: completionTrend.map(item => item.rate),
+        data: completionTrend.map((item) => item.rate),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.5)',
-        tension: 0.4,
-      },
-    ],
+        tension: 0.4
+      }
+    ]
   };
 
   const options = {
@@ -109,15 +108,15 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
       legend: {
         position: 'top' as const,
         labels: {
-          color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
-        },
+          color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
+        }
       },
       title: {
         display: true,
         text: 'Chore Status Distribution',
-        color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
-      },
-    },
+        color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
+      }
+    }
   };
 
   const lineOptions = {
@@ -126,35 +125,39 @@ const ChoreChart: React.FC<ChoreChartProps> = ({ chores }) => {
       legend: {
         position: 'top' as const,
         labels: {
-          color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
-        },
+          color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
+        }
       },
       title: {
         display: true,
         text: 'Daily Completion Rate',
-        color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
-      },
+        color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
+      }
     },
     scales: {
       y: {
         beginAtZero: true,
         max: 100,
         ticks: {
-          color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
+          color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
         },
         grid: {
-          color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        },
+          color: document.documentElement.classList.contains('dark')
+            ? 'rgba(255, 255, 255, 0.1)'
+            : 'rgba(0, 0, 0, 0.1)'
+        }
       },
       x: {
         ticks: {
-          color: document.documentElement.classList.contains('dark') ? 'white' : 'black',
+          color: document.documentElement.classList.contains('dark') ? 'white' : 'black'
         },
         grid: {
-          color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        },
-      },
-    },
+          color: document.documentElement.classList.contains('dark')
+            ? 'rgba(255, 255, 255, 0.1)'
+            : 'rgba(0, 0, 0, 0.1)'
+        }
+      }
+    }
   };
 
   return (

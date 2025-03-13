@@ -10,6 +10,7 @@ const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [hasHousehold, setHasHousehold] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -19,10 +20,7 @@ const Navbar: React.FC = () => {
     if (token) {
       try {
         const decodedToken: { id?: string } = jwtDecode(token);
-        console.log('Decoded Token:', decodedToken);
-
         const userId = decodedToken.id;
-        console.log('User ID from token:', userId);
 
         if (userId) {
           const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
@@ -30,32 +28,19 @@ const Navbar: React.FC = () => {
               Authorization: `Bearer ${token}`
             }
           });
-          console.log('Response:', response);
-
-          const responseText = await response.text();
-          console.log('Response Text:', responseText);
 
           if (response.ok) {
-            const result = JSON.parse(responseText);
-            console.log('Backend Response:', result);
-
+            const result = await response.json();
             if (result.success && result.data) {
               setUserName(result.data.name);
               setIsLoggedIn(true);
-            } else {
-              console.error('Failed to fetch user details:', result.message);
-              setIsLoggedIn(false);
+              setHasHousehold(!!result.data.household_id); // Check if user has a household
             }
           } else {
-            console.error('Failed to fetch user details:', response.statusText);
             setIsLoggedIn(false);
           }
-        } else {
-          console.error('User ID not found in token');
-          setIsLoggedIn(false);
         }
-      } catch (error) {
-        console.error('Error fetching user details:', error);
+      } catch {
         setIsLoggedIn(false);
       }
     }
@@ -70,6 +55,7 @@ const Navbar: React.FC = () => {
     setIsLoggedIn(false);
     setUserName(null);
     setIsDropdownOpen(false);
+    setHasHousehold(false);
     router.push('/login');
   };
 
@@ -95,14 +81,34 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-16">
           {isLoggedIn && (
             <>
-              <Link
-                href="/dashboard"
-                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                  pathname === '/dashboard' ? 'text-blue-600 dark:text-blue-400' : ''
-                }`}
-              >
-                Dashboard
-              </Link>
+              {hasHousehold && (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                      pathname === '/dashboard' ? 'text-blue-600 dark:text-blue-400' : ''
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/expense"
+                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                      pathname === '/expense' ? 'text-blue-600 dark:text-blue-400' : ''
+                    }`}
+                  >
+                    Expenses
+                  </Link>
+                  <Link
+                    href="/chore"
+                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
+                      pathname === '/chore' ? 'text-blue-600 dark:text-blue-400' : ''
+                    }`}
+                  >
+                    Chores
+                  </Link>
+                </>
+              )}
               <Link
                 href="/homes"
                 className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
@@ -110,22 +116,6 @@ const Navbar: React.FC = () => {
                 }`}
               >
                 Homes
-              </Link>
-              <Link
-                href="/expense"
-                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                  pathname === '/expense' ? 'text-blue-600 dark:text-blue-400' : ''
-                }`}
-              >
-                Expenses
-              </Link>
-              <Link
-                href="/chore"
-                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                  pathname === '/chore' ? 'text-blue-600 dark:text-blue-400' : ''
-                }`}
-              >
-                Chores
               </Link>
               <Link
                 href="/usettings"
@@ -174,26 +164,44 @@ const Navbar: React.FC = () => {
         <div className="md:hidden flex flex-col items-center mt-4 space-y-2">
           {isLoggedIn && (
             <>
+              {hasHousehold && (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="hover:text-blue-400 transition"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/expense"
+                    className="hover:text-blue-400 transition"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Expenses
+                  </Link>
+                  <Link
+                    href="/chore"
+                    className="hover:text-blue-400 transition"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Chores
+                  </Link>
+                </>
+              )}
               <Link
-                href="/expense"
+                href="/homes"
                 className="hover:text-blue-400 transition"
                 onClick={() => setIsOpen(false)}
               >
-                Expenses
+                Homes
               </Link>
               <Link
-                href="/chore"
+                href="/usettings"
                 className="hover:text-blue-400 transition"
                 onClick={() => setIsOpen(false)}
               >
-                Chores
-              </Link>
-              <Link
-                href="/task"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
-                Tasks
+                Settings
               </Link>
               <button onClick={handleLogout} className="hover:text-blue-400 transition">
                 Logout

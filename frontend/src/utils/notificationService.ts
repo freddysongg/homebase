@@ -34,7 +34,8 @@ class NotificationService {
   private showInAppNotification(title: string, message: string) {
     // Create and show a toast notification
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 right-4 bg-white dark:bg-dark-secondary text-gray-900 dark:text-white p-4 rounded-lg shadow-lg z-50 animate-fade-in';
+    toast.className =
+      'fixed bottom-4 right-4 bg-white dark:bg-dark-secondary text-gray-900 dark:text-white p-4 rounded-lg shadow-lg z-50 animate-fade-in';
     toast.innerHTML = `
       <h4 class="font-bold">${title}</h4>
       <p>${message}</p>

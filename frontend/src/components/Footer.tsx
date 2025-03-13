@@ -8,29 +8,47 @@ const Footer = () => {
         <div className="text-sm text-gray-600 dark:text-gray-300">
           <p>
             Email:{' '}
-            <a href="mailto:info@mywebsite.com" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+            <a
+              href="mailto:info@mywebsite.com"
+              className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+            >
               info@homebase.com
             </a>
           </p>
           <p>
             Phone:{' '}
-            <a href="tel:+1234567890" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+            <a
+              href="tel:+1234567890"
+              className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+            >
               +1 (234) 567-890
             </a>
           </p>
         </div>
 
         <nav className="flex space-x-4 text-sm font-medium mt-3 md:mt-0">
-          <Link href="/" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          <Link
+            href="/"
+            className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+          >
             Chore Management
           </Link>
-          <Link href="/" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          <Link
+            href="/"
+            className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+          >
             Expense Tracking
           </Link>
-          <Link href="/" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          <Link
+            href="/"
+            className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+          >
             Household Tasks
           </Link>
-          <Link href="/" className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          <Link
+            href="/"
+            className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+          >
             User Profiles
           </Link>
         </nav>
