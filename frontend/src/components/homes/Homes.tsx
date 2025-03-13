@@ -86,8 +86,8 @@ const Homes = () => {
           console.log('Household Data:', householdData); // Debugging: Log household data
 
           // Redirect to HomeDetails using the homeCode
-          // router.push(`/homes/${householdData.data.house_code}`);
-          window.location.replace(`/homes/${householdData.data.house_code}`);
+          router.push(`/homes/${householdData.data.house_code}`);
+          // window.location.replace(`/homes/${householdData.data.house_code}`);
         }
       } catch (error) {
         console.error('Error checking user home:', error);
