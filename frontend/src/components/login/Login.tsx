@@ -50,7 +50,8 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        router.push('/dashboard');
+        // router.push('/dashboard');
+        window.location.replace('/dashboard');
       } else {
         throw new Error(data.message || 'Login failed');
       }

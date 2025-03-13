@@ -97,6 +97,7 @@ const ExpenseComponent = () => {
   const [splitEvenly, setSplitEvenly] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -179,6 +180,11 @@ const ExpenseComponent = () => {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setUserId(decodedToken.id);
+    }
     fetchHouseholdMembers();
     fetchExpenses();
   }, []);
@@ -319,7 +325,15 @@ const ExpenseComponent = () => {
     }
   };
 
-  const handleStatusChange = async (expenseId: string, newStatus: 'pending' | 'paid') => {
+  const handleStatusChange = async (
+    expenseId: string,
+    newStatus: 'pending' | 'paid',
+    createdBy: string
+  ) => {
+    if (userId !== createdBy) {
+      alert('Only the creator of the expense can mark it as paid.');
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No token found');
@@ -336,10 +350,8 @@ const ExpenseComponent = () => {
       if (!response.ok) throw new Error('Failed to update expense status');
 
       fetchExpenses();
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to update expense status';
-      console.error(errorMessage);
+    } catch (error) {
+      console.error('Error updating expense status:', error);
     }
   };
 
@@ -481,14 +493,6 @@ const ExpenseComponent = () => {
                   <div className="flex gap-2">
                     <Button
                       type="button"
-                      variant={splitMode === 'none' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleSplitModeChange('none')}
-                    >
-                      No Split
-                    </Button>
-                    <Button
-                      type="button"
                       variant={splitMode === 'even' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => handleSplitModeChange('even')}
@@ -578,9 +582,11 @@ const ExpenseComponent = () => {
                         onClick={() =>
                           handleStatusChange(
                             expense._id,
-                            expense.status === 'paid' ? 'pending' : 'paid'
+                            expense.status === 'paid' ? 'pending' : 'paid',
+                            expense.created_by._id
                           )
                         }
+                        disabled={userId !== expense.created_by._id}
                       >
                         Mark as {expense.status === 'paid' ? 'Pending' : 'Paid'}
                       </Button>
