@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { useRouter } from 'next/navigation';
-import { useTheme } from '@/components/ThemeProvider';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 const HomeDetails = ({ homeCode }: { homeCode: string }) => {
-  const { theme } = useTheme();
   const [homeName, setHomeName] = useState<string | null>(null);
   const [homeAddress, setHomeAddress] = useState<{
     street: string;
@@ -27,7 +27,6 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   const [isLeaving, setIsLeaving] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [leaveSuccess, setLeaveSuccess] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchHouseholdDetails = async () => {
@@ -151,73 +150,105 @@ const HomeDetails = ({ homeCode }: { homeCode: string }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-white">
-      <h1 className={`text-4xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
-        Home Details
-      </h1>
+    <div className="container mx-auto p-6 space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Home Details</CardTitle>
+          <CardDescription>View and manage your household information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <p>Loading home details...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md">{error}</div>
+          ) : leaveSuccess ? (
+            <div className="space-y-2 text-center p-8">
+              <p className="text-green-500 text-xl font-bold">
+                You have successfully left the home!
+              </p>
+              <p className="text-muted-foreground">Redirecting you to the homes page...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Home Name</h3>
+                  <p className="text-muted-foreground">{homeName}</p>
+                </div>
 
-      <div className="bg-black p-6 rounded-lg shadow-md w-96">
-        {isLoading ? (
-          <p>Loading home details...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
-        ) : leaveSuccess ? (
-          <div className="text-center">
-            <p className="text-green-500 text-xl font-bold">You have successfully left the home!</p>
-            <p className="text-gray-300">Redirecting you to the homes page...</p>
-          </div>
-        ) : (
-          <>
-            <p className="text-xl font-bold">Home Name: {homeName}</p>
-            <p className="text-lg">
-              Address: {homeAddress.street}, {homeAddress.city}, {homeAddress.state}{' '}
-              {homeAddress.zip}, {homeAddress.country}
-            </p>
-            <p className="text-lg">Home Code: {homeCode}</p>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Address</h3>
+                  <p className="text-muted-foreground">
+                    {homeAddress.street}, {homeAddress.city}, {homeAddress.state} {homeAddress.zip},{' '}
+                    {homeAddress.country}
+                  </p>
+                </div>
 
-            <h2 className="text-xl font-bold mt-4">👥 Members:</h2>
-            <ul>
-              {members.length === 0 ? (
-                <p>No members found.</p>
-              ) : (
-                members.map((member, index) => <li key={index}>• {member}</li>)
-              )}
-            </ul>
-            <button
-              onClick={() => setShowConfirmation(true)} // Show confirmation modal on click
-              className="w-full bg-red-600 hover:bg-red-700 transition p-2 rounded-md font-bold mt-4"
-              disabled={isLeaving}
-            >
-              {isLeaving ? 'Leaving...' : 'Leave Home'}
-            </button>
-          </>
-        )}
-      </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Home Code</h3>
+                  <p className="text-muted-foreground">{homeCode}</p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Members</h3>
+                  {members.length === 0 ? (
+                    <p className="text-muted-foreground">No members found.</p>
+                  ) : (
+                    <div className="grid gap-2">
+                      {members.map((member, index) => (
+                        <div key={index} className="flex items-center gap-2 text-muted-foreground">
+                          <span className="h-2 w-2 rounded-full bg-primary" />
+                          {member}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowConfirmation(true)}
+                  disabled={isLeaving}
+                >
+                  {isLeaving ? 'Leaving...' : 'Leave Home'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-md w-96">
-            <h2 className="text-xl font-bold mb-2">Are you sure?</h2>
-            <p className="mb-4">
-              Do you really want to leave this home? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setShowConfirmation(false)}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowConfirmation(false);
-                  handleLeaveHome();
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-              >
-                Leave Home
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-0 flex items-center justify-center">
+            <Card className="max-w-md mx-auto">
+              <CardHeader>
+                <CardTitle>Are you sure?</CardTitle>
+                <CardDescription>
+                  Do you really want to leave this home? This action cannot be undone.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-end gap-4">
+                <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setShowConfirmation(false);
+                    handleLeaveHome();
+                  }}
+                >
+                  Leave Home
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

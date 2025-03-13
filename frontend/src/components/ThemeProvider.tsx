@@ -6,13 +6,11 @@ import { jwtDecode } from 'jwt-decode';
 // Add script to prevent theme flash
 const themeScript = `
   (function() {
-    // Try to get theme from localStorage
     let theme = localStorage.getItem('theme');
     if (!theme) {
-      // If no theme in localStorage, check system preference
-      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      theme = 'light';
+      localStorage.setItem('theme', 'light');
     }
-    // Immediately set the theme before page renders
     document.documentElement.classList.add(theme);
   })();
 `;
@@ -32,9 +30,64 @@ export const useTheme = () => {
   return context;
 };
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
   const [mounted, setMounted] = useState(false);
+
+  // Initialize theme from localStorage or user preferences
+  useEffect(() => {
+    const fetchUserTheme = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          // No token means user is not logged in, use localStorage or default
+          const savedTheme = localStorage.getItem('theme') || 'light';
+          setTheme(savedTheme as 'light' | 'dark' | 'system');
+          return;
+        }
+
+        // Get user ID from token
+        const decodedToken = jwtDecode(token) as { id: string };
+        const userId = decodedToken.id;
+
+        const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch user theme');
+
+        const userData = await response.json();
+        const userTheme = userData.data?.preferences?.theme || 'light';
+
+        setTheme(userTheme);
+        localStorage.setItem('theme', userTheme);
+      } catch (error) {
+        console.error('Error fetching theme:', error);
+        // Fallback to light theme
+        setTheme('light');
+        localStorage.setItem('theme', 'light');
+      } finally {
+        setMounted(true);
+      }
+    };
+
+    fetchUserTheme();
+  }, []);
+
+  // Handle theme changes
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(
+      theme === 'system'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : theme
+    );
+  }, [theme]);
 
   // Add script to head to prevent theme flash
   useEffect(() => {
@@ -46,71 +99,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchUserTheme = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const decodedToken = jwtDecode(token) as { id: string };
-        const userId = decodedToken.id;
-
-        const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) return;
-
-        const userData = await response.json();
-        if (userData.data?.preferences?.theme) {
-          setTheme(userData.data.preferences.theme);
-        }
-      } catch (error) {
-        console.error('Error fetching user theme:', error);
-      } finally {
-        setMounted(true);
-      }
-    };
-
-    fetchUserTheme();
-  }, []);
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // Remove both classes first
-    root.classList.remove('light', 'dark');
-
-    // Apply appropriate theme
-    if (theme === 'system') {
-      root.classList.add(systemTheme ? 'dark' : 'light');
-      localStorage.setItem('theme', systemTheme ? 'dark' : 'light');
-    } else {
-      root.classList.add(theme);
-      localStorage.setItem('theme', theme);
-    }
-
-    // Add listener for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        root.classList.remove('light', 'dark');
-        root.classList.add(e.matches ? 'dark' : 'light');
-        localStorage.setItem('theme', e.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
-
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
-};
+}

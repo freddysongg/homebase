@@ -1,14 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Activity, Users, DollarSign, CheckSquare, TrendingUp, Calendar } from 'lucide-react';
 import ExpenseChart from './ExpenseChart';
 import ChoreChart from './ChoreChart';
 
 interface Chore {
   _id: string;
   name: string;
-  description?: string;
   assigned_to: { _id: string; name: string }[];
   due_date: string;
   status: 'pending' | 'in-progress' | 'completed';
@@ -42,18 +47,11 @@ const Dashboard = () => {
   const [household, setHousehold] = useState<Household | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'chores'>('overview');
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
 
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
+      if (!token) throw new Error('No token found');
 
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
@@ -102,30 +100,59 @@ const Dashboard = () => {
 
       const expensesData = await expensesResponse.json();
       setExpenses(expensesData.data);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-center text-red-500 p-4">{error}</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={fetchDashboardData} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!household) {
     return (
-      <div className="text-center p-4">
-        Please join or create a household to view the dashboard.
+      <div className="flex justify-center items-center min-h-screen">
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome to HomeBase</CardTitle>
+            <CardDescription>Join or create a household to get started</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <a href="/homes">Get Started</a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -136,182 +163,174 @@ const Dashboard = () => {
     .reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {household.name} Dashboard
-        </h1>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg transition ${
-              activeTab === 'overview'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('expenses')}
-            className={`px-4 py-2 rounded-lg transition ${
-              activeTab === 'expenses'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            Expenses
-          </button>
-          <button
-            onClick={() => setActiveTab('chores')}
-            className={`px-4 py-2 rounded-lg transition ${
-              activeTab === 'chores'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            }`}
-          >
-            Chores
-          </button>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">{household.name}</h1>
+          <p className="text-muted-foreground">Dashboard Overview</p>
         </div>
+        <Button asChild variant="outline">
+          <a href="/homes">Manage Household</a>
+        </Button>
       </div>
 
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Total Expenses
-              </h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${totalExpenses.toFixed(2)}
-              </p>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Pending: ${pendingExpenses.toFixed(2)}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Active Chores
-              </h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {chores.filter((chore) => chore.status !== 'completed').length}
-              </p>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Total: {chores.length}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Household Members
-              </h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {household.members.length}
-              </p>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Active Today:{' '}
-                {
-                  household.members.filter(
-                    (m) =>
-                      m.lastActive &&
-                      new Date(m.lastActive).toDateString() === new Date().toDateString()
-                  ).length
-                }
-              </div>
-            </div>
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Completion Rate
-              </h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {chores.length > 0
-                  ? `${((chores.filter((c) => c.status === 'completed').length / chores.length) * 100).toFixed(1)}%`
-                  : '0%'}
-              </p>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">Last 7 days</div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Pending: ${pendingExpenses.toFixed(2)}</p>
+          </CardContent>
+        </Card>
 
-          {/* Recent Activity */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Chores</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {chores.filter((chore) => chore.status !== 'completed').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Total: {chores.length}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Members</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{household.members.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Active Today:{' '}
+              {
+                household.members.filter(
+                  (m) =>
+                    m.lastActive &&
+                    new Date(m.lastActive).toDateString() === new Date().toDateString()
+                ).length
+              }
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {chores.length > 0
+                ? `${((chores.filter((c) => c.status === 'completed').length / chores.length) * 100).toFixed(1)}%`
+                : '0%'}
+            </div>
+            <p className="text-xs text-muted-foreground">Last 7 days</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="chores">Chores</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                Recent Expenses
-              </h2>
-              <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Expenses</CardTitle>
+                <CardDescription>Latest financial activities</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {expenses.slice(0, 5).map((expense) => (
                   <div key={expense._id} className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{expense.title}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {expense.created_by.name}
-                      </p>
+                      <p className="font-medium">{expense.title}</p>
+                      <p className="text-sm text-muted-foreground">{expense.created_by.name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900 dark:text-white">${expense.amount}</p>
-                      <p
-                        className={`text-sm ${
-                          expense.status === 'paid' ? 'text-green-500' : 'text-red-500'
-                        }`}
-                      >
+                      <p className="font-medium">${expense.amount}</p>
+                      <Badge variant={expense.status === 'paid' ? 'default' : 'secondary'}>
                         {expense.status}
-                      </p>
+                      </Badge>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-dark-secondary p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                Upcoming Chores
-              </h2>
-              <div className="space-y-4">
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Chores</CardTitle>
+                <CardDescription>Tasks that need attention</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {chores
                   .filter((chore) => chore.status !== 'completed')
                   .slice(0, 5)
                   .map((chore) => (
                     <div key={chore._id} className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{chore.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="font-medium">{chore.name}</p>
+                        <p className="text-sm text-muted-foreground">
                           {chore.assigned_to.map((user) => user.name).join(', ')}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                           {new Date(chore.due_date).toLocaleDateString()}
                         </p>
-                        <p
-                          className={`text-sm ${
+                        <Badge
+                          variant={
                             chore.status === 'completed'
-                              ? 'text-green-500'
+                              ? 'default'
                               : chore.status === 'in-progress'
-                                ? 'text-blue-500'
-                                : 'text-yellow-500'
-                          }`}
+                                ? 'secondary'
+                                : 'destructive'
+                          }
                         >
                           {chore.status}
-                        </p>
+                        </Badge>
                       </div>
                     </div>
                   ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'expenses' && (
-        <div className="space-y-6">
-          <ExpenseChart expenses={expenses} />
-        </div>
-      )}
+        <TabsContent value="expenses">
+          <Card>
+            <CardHeader>
+              <CardTitle>Expense Analytics</CardTitle>
+              <CardDescription>Financial trends and patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpenseChart expenses={expenses} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {activeTab === 'chores' && (
-        <div className="space-y-6">
-          <ChoreChart chores={chores} />
-        </div>
-      )}
+        <TabsContent value="chores">
+          <Card>
+            <CardHeader>
+              <CardTitle>Chore Analytics</CardTitle>
+              <CardDescription>Task completion and distribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChoreChart chores={chores} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

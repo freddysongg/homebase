@@ -1,6 +1,37 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { jwtDecode } from 'jwt-decode';
 
 interface Split {
@@ -9,7 +40,7 @@ interface Split {
 }
 
 interface SplitAmong {
-  user: string;
+  user: string; // This matches the old implementation
   amount: string;
 }
 
@@ -35,43 +66,80 @@ interface Expense {
   __v: number;
 }
 
-interface Roommate {
-  id: string;
-  name: string;
-}
+const formSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: 'Amount must be a positive number'
+  }),
+  category: z.enum(['rent', 'utilities', 'groceries', 'household', 'other']),
+  due_date: z.string().min(1, 'Due date is required'),
+  paid_by: z.string().min(1, 'Paid by is required')
+});
 
-const Expense = () => {
+const categories = ['rent', 'utilities', 'groceries', 'household', 'other'] as const;
+
+// Add this type for split mode
+type SplitMode = 'none' | 'even' | 'manual';
+
+const ExpenseComponent = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [totalAmount, setTotalAmount] = useState<number | ''>('');
-  const [paidBy, setPaidBy] = useState('');
-  const [category, setCategory] = useState<
-    'rent' | 'utilities' | 'groceries' | 'household' | 'other'
-  >('rent');
-  const [dueDate, setDueDate] = useState('');
-  const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
-  const [splitEvenly, setSplitEvenly] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [householdMembers, setHouseholdMembers] = useState<{ _id: string; name: string }[]>([]);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<
     'weekly' | 'monthly' | 'yearly' | null
   >(null);
-  const [recurringEndDate, setRecurringEndDate] = useState<string>('');
+  const [recurringEndDate, setRecurringEndDate] = useState('');
+  const [splitMode, setSplitMode] = useState<SplitMode>('none');
+  const [totalAmount] = useState<string>('');
+  const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
+  const [splitEvenly, setSplitEvenly] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [roommates, setRoommates] = useState<Roommate[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({});
 
-  const fetchRoommates = async () => {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      amount: '',
+      category: 'rent',
+      due_date: new Date().toISOString().split('T')[0],
+      paid_by: ''
+    }
+  });
+
+  const fetchExpenses = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found, user not logged in.');
-      }
+      if (!token) throw new Error('No token found');
 
-      // Fetch user data to get the householdId
+      const response = await fetch('http://localhost:5001/api/expenses', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch expenses');
+
+      const data = await response.json();
+      setExpenses(data.data);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch expenses';
+      console.error(errorMessage);
+    }
+  };
+
+  const fetchHouseholdMembers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found, user not logged in.');
+
+      // First get the user's ID from token
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
 
+      // Fetch user data to get the householdId
       const userResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
         method: 'GET',
         headers: {
@@ -81,12 +149,10 @@ const Expense = () => {
       });
 
       if (!userResponse.ok) throw new Error('Failed to fetch user details');
-
       const userData = await userResponse.json();
       const householdId = userData.data?.household_id;
 
-      // if (!householdId) throw new Error('User is not associated with any household');
-
+      // Fetch household members using householdId
       const householdResponse = await fetch(`http://localhost:5001/api/households/${householdId}`, {
         method: 'GET',
         headers: {
@@ -96,95 +162,44 @@ const Expense = () => {
       });
 
       if (!householdResponse.ok) throw new Error('Failed to fetch household data');
-
       const householdData = await householdResponse.json();
 
-      setRoommates(
+      setHouseholdMembers(
         householdData.data.members.map((member: { name: string; _id: string }) => ({
           name: member.name,
-          id: member._id
+          _id: member._id
         }))
       );
 
-      console.log('Fetched roommates:', householdData.data.members);
-      console.log('Actual roommates:', roommates);
-
-      fetchExpenses(token);
+      // After fetching members, also fetch expenses
+      fetchExpenses();
     } catch (error) {
-      console.error('Error fetching roommates:', error);
-    }
-  };
-
-  const fetchExpenses = async (token: string) => {
-    try {
-      const response = await fetch('http://localhost:5001/api/expenses', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch expenses');
-
-      const data = await response.json();
-      console.log('Fetched expenses:', data); // Debugging
-      setExpenses(data.data || []);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('Error fetching household members:', error);
     }
   };
 
   useEffect(() => {
-    fetchRoommates();
+    fetchHouseholdMembers();
+    fetchExpenses();
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const decodedToken = jwtDecode(token) as { id: string };
-      setUserId(decodedToken.id);
-    }
-  }, []);
+  // const handleTotalAmountChange = (value: string) => {
+  //   const numericValue = value.replace(/[^0-9.]/g, '');
+  //   setTotalAmount(numericValue);
+  //   setSplitAmong([]);
+  // };
 
-  const handleTotalAmountChange = (value: string) => {
-    const numericValue = value.replace(/[^0-9.]/g, '');
-    setTotalAmount(numericValue ? Number(numericValue) : '');
-    setSplitAmong([]);
-  };
+  // const handleSplitChange = (index: number, field: keyof SplitAmong, value: string) => {
+  //   const updatedSplit = [...splitAmong];
+  //   if (field === 'user') {
+  //     updatedSplit[index][field] = value;
+  //   } else if (field === 'amount') {
+  //     updatedSplit[index][field] = value;
+  //   }
+  //   setSplitAmong(updatedSplit);
+  // };
 
-  const handleSplitChange = (index: number, field: keyof SplitAmong, value: string) => {
-    const updatedSplit = [...splitAmong];
-
-    if (field === 'user') {
-      updatedSplit[index][field] = value;
-    } else if (field === 'amount') {
-      updatedSplit[index][field] = value;
-    }
-
-    setSplitAmong(updatedSplit);
-  };
-
-  const addSplitField = () => {
-    if (!totalAmount || totalAmount <= 0) {
-      setErrorMessage('Enter total amount first!');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return;
-    }
-    setSplitAmong([...splitAmong, { user: '', amount: '' }]);
-  };
-
-  const removeSplitField = (index: number) => {
-    if (splitAmong.length > 1) {
-      setSplitAmong(splitAmong.filter((_, i) => i !== index));
-    }
-  };
-
-  const toggleSplitMethod = () => {
-    setSplitEvenly(!splitEvenly);
-    setErrorMessage('');
-  };
-
+  // Update split amounts when splitting evenly
   useEffect(() => {
     if (splitEvenly && totalAmount && splitAmong.length > 0) {
       const evenAmount = (Number(totalAmount) / splitAmong.length).toFixed(2);
@@ -192,107 +207,84 @@ const Expense = () => {
     }
   }, [totalAmount, splitAmong.length, splitEvenly]);
 
-  const validateExpense = () => {
-    if (
-      !title ||
-      totalAmount === '' ||
-      !paidBy ||
-      splitAmong.length === 0 ||
-      !category ||
-      !dueDate
-    ) {
-      setErrorMessage('Please fill in all fields.');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return false;
+  const validateExpense = (values: z.infer<typeof formSchema>) => {
+    if (splitMode !== 'none') {
+      const splitTotal = Object.values(splitAmounts).reduce(
+        (sum, amount) => sum + (parseFloat(amount) || 0),
+        0
+      );
+
+      const totalAmt = parseFloat(values.amount);
+
+      if (Math.abs(splitTotal - totalAmt) > 0.01) {
+        setErrorMessage('Split amounts must equal the total amount');
+        return false;
+      }
     }
-
-    const sumOfAmounts = splitAmong.reduce((sum, entry) => sum + Number(entry.amount), 0);
-
-    if (!splitEvenly && sumOfAmounts !== Number(totalAmount)) {
-      setErrorMessage('Error: Split amounts must add up to the total amount.');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return false;
-    }
-
-    setErrorMessage('');
     return true;
   };
 
-  const handleMarkAsSettled = async (expenseId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Token not found, user not logged in.');
+  const handleSplitModeChange = (mode: SplitMode) => {
+    setSplitMode(mode);
+    if (mode === 'none') {
+      setSplitAmong([]);
+    } else if (mode === 'even') {
+      // Create even splits for all household members
+      const amount = form.getValues('amount');
+      if (amount && householdMembers.length > 0) {
+        const evenAmount = (Number(amount) / householdMembers.length).toFixed(2);
+        setSplitAmong(
+          householdMembers.map((member) => ({
+            user: member._id,
+            amount: evenAmount
+          }))
+        );
+        setSplitEvenly(true);
       }
-
-      console.log('Marking expense as settled:', expenseId); // Debugging
-
-      const response = await fetch(`http://localhost:5001/api/expenses/${expenseId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: 'paid' }) // Send the updated status
-      });
-
-      console.log('Response:', response); // Debugging
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error marking expense as settled:', errorData); // Debugging
-        throw new Error(errorData.message || 'Failed to mark expense as settled');
-      }
-
-      const updatedExpense = await response.json();
-      console.log('Updated expense:', updatedExpense); // Debugging
-
-      // Update the local state
-      setExpenses(
-        expenses.map((expense) =>
-          expense._id === expenseId ? { ...expense, status: 'paid' } : expense
-        )
+    } else {
+      // For manual mode, initialize empty splits for all members
+      setSplitAmong(
+        householdMembers.map((member) => ({
+          user: member._id,
+          amount: ''
+        }))
       );
-    } catch (error) {
-      console.error('Error marking expense as settled:', error); // Debugging
-      setErrorMessage('Failed to mark expense as settled. Please try again.');
+      setSplitEvenly(false);
     }
   };
 
-  const handleAddExpense = async () => {
-    if (!validateExpense()) return;
-
-    const newExpense = {
-      title,
-      amount: Number(totalAmount),
-      category,
-      description,
-      due_date: dueDate,
-      splits: splitAmong.map((entry) => {
-        const roommate = roommates.find((roommate) => roommate.id === entry.user);
-        if (!roommate) {
-          throw new Error(`Roommate with id ${entry.user} not found.`);
-        }
-        return {
-          user_id: roommate.id,
-          amount: Number(entry.amount)
-        };
-      }),
-      recurring: {
-        is_recurring: isRecurring,
-        frequency: isRecurring ? recurringFrequency : null,
-        end_date: isRecurring ? recurringEndDate : null
-      },
-      receipt_url: ''
-    };
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!validateExpense(values)) return;
+    setIsLoading(true);
+    setErrorMessage('');
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Token not found, user not logged in.');
-      }
+      if (!token) throw new Error('Token not found');
 
-      console.log('Sending expense data:', newExpense);
+      // Convert split amounts to the format expected by the API
+      const splits =
+        splitMode === 'none'
+          ? []
+          : Object.entries(splitAmounts).map(([userId, amount]) => ({
+              user_id: userId,
+              amount: parseFloat(amount)
+            }));
+
+      const newExpense = {
+        title: values.title,
+        description: values.description || '',
+        amount: parseFloat(values.amount),
+        category: values.category,
+        due_date: values.due_date,
+        paid_by: values.paid_by,
+        splits,
+        recurring: {
+          is_recurring: isRecurring,
+          frequency: isRecurring ? recurringFrequency : null,
+          end_date: isRecurring ? recurringEndDate : null
+        }
+      };
 
       const response = await fetch('http://localhost:5001/api/expenses', {
         method: 'POST',
@@ -305,269 +297,305 @@ const Expense = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error adding expense:', errorData);
-        throw new Error(errorData.message || 'Failed to add expense');
+        throw new Error(errorData.message || 'Failed to create expense');
       }
 
       const createdExpense = await response.json();
-      setExpenses([...expenses, createdExpense.data]);
+      setExpenses((prevExpenses) => [...prevExpenses, createdExpense.data]);
 
-      setTitle('');
-      setDescription('');
-      setTotalAmount('');
-      setPaidBy('');
-      setCategory('rent');
-      setDueDate('');
-      setSplitAmong([]);
+      // Reset form and state
+      form.reset();
+      setSplitMode('none');
+      setSplitAmounts({});
+      setIsRecurring(false);
+      setRecurringFrequency(null);
+      setRecurringEndDate('');
+      setErrorMessage('');
     } catch (error) {
-      console.error('Error adding expense:', error);
-      setErrorMessage('Failed to add expense. Please try again.');
+      console.error('Error creating expense:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create expense');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="max-w-3xl mx-auto p-6 bg-black text-white rounded-lg shadow-lg my-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Expense Tracker</h1>
+  const handleStatusChange = async (expenseId: string, newStatus: 'pending' | 'paid') => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
 
-      <div className="mb-6 p-4 rounded-lg">
-        <h2 className="text-xl font-semibold mb-3">Add Expense</h2>
+      const response = await fetch(`http://localhost:5001/api/expenses/${expenseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
 
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        />
+      if (!response.ok) throw new Error('Failed to update expense status');
 
-        <input
-          type="text"
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        />
+      fetchExpenses();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update expense status';
+      console.error(errorMessage);
+    }
+  };
 
-        <input
-          type="text"
-          placeholder="Total Amount"
-          value={totalAmount.toString()}
-          onChange={(e) => handleTotalAmountChange(e.target.value)}
-          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        />
+  const ErrorMessage = () =>
+    errorMessage ? <div className="text-red-500 text-sm mt-2">{errorMessage}</div> : null;
 
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        />
-
-        <select
-          value={paidBy}
-          onChange={(e) => setPaidBy(e.target.value)}
-          className="w-full p-2 mb-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        >
-          <option value="">Select Paid By</option>
-          {roommates.map((roommate, i) => (
-            <option key={i} value={roommate.id}>
-              {roommate.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={category}
-          onChange={(e) =>
-            setCategory(
-              e.target.value as 'rent' | 'utilities' | 'groceries' | 'household' | 'other'
-            )
-          }
-          className="w-full p-2 mb-4 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-        >
-          <option value="rent">Rent</option>
-          <option value="utilities">Utilities</option>
-          <option value="groceries">Groceries</option>
-          <option value="household">Household</option>
-          <option value="other">Other</option>
-        </select>
-
-        <div className="flex items-center space-x-4 mb-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={splitEvenly}
-              onChange={toggleSplitMethod}
-              className="w-4 h-4 text-blue-500"
-            />
-            <span>Split Evenly</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={!splitEvenly}
-              onChange={toggleSplitMethod}
-              className="w-4 h-4 text-blue-500"
-            />
-            <span>Manual Split</span>
-          </label>
+  const renderSplitAmounts = () => (
+    <div className="space-y-2">
+      {householdMembers.map((member) => (
+        <div key={member._id} className="flex items-center gap-4">
+          <span className="min-w-[120px] text-sm font-medium">{member.name}</span>
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={splitAmounts[member._id] || ''}
+            onChange={(e) => {
+              setSplitAmounts((prev: Record<string, string>) => ({
+                ...prev,
+                [member._id]: e.target.value
+              }));
+            }}
+            disabled={splitMode === 'even'}
+            className="max-w-[150px]"
+          />
         </div>
+      ))}
+    </div>
+  );
 
-        {errorMessage && <p className="text-red-500 text-sm font-bold mb-2">{errorMessage}</p>}
+  const calculateSplitTotal = () => {
+    return Object.values(splitAmounts)
+      .reduce((sum: number, amount: string) => sum + (parseFloat(amount) || 0), 0)
+      .toFixed(2);
+  };
 
-        <h3 className="text-lg font-semibold mt-4">Split Among:</h3>
-        {splitAmong.map((entry, index) => (
-          <div key={index} className="flex space-x-2 mb-2">
-            <select
-              value={entry.user}
-              onChange={(e) => handleSplitChange(index, 'user', e.target.value)}
-              className="w-1/3 p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-            >
-              <option value="">Select User</option>
-              {roommates.map((roommate, i) => (
-                <option key={i} value={roommate.id}>
-                  {roommate.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Amount"
-              value={entry.amount}
-              onChange={(e) => handleSplitChange(index, 'amount', e.target.value)}
-              className="w-1/3 p-2 rounded-md text-black border border-gray-600 focus:ring focus:ring-blue-500"
-              disabled={splitEvenly}
-            />
-            <button
-              onClick={() => removeSplitField(index)}
-              className="bg-red-500 text-white p-2 rounded-md"
-            >
-              ✖
-            </button>
-          </div>
-        ))}
-
-        <button
-          onClick={addSplitField}
-          className="w-full mt-2 bg-gray-600 hover:bg-gray-700 transition p-2 rounded-md font-semibold"
-        >
-          + Add User
-        </button>
-
-        <div className="space-y-4 mt-4 mb-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={isRecurring}
-              onChange={(e) => {
-                setIsRecurring(e.target.checked);
-                if (!e.target.checked) {
-                  setRecurringFrequency(null);
-                  setRecurringEndDate('');
-                }
-              }}
-              className="w-4 h-4"
-            />
-            <span>Make Recurring</span>
-          </label>
-
-          {isRecurring && (
-            <div className="space-y-2 pl-6">
-              <select
-                value={recurringFrequency || ''}
-                onChange={(e) =>
-                  setRecurringFrequency(e.target.value as 'weekly' | 'monthly' | 'yearly')
-                }
-                className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
-              >
-                <option value="">Select Frequency</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={recurringEndDate}
-                  onChange={(e) => setRecurringEndDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full p-2 rounded-md border text-black border-gray-600 focus:ring focus:ring-blue-500"
+  return (
+    <div className="container mx-auto p-6 space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Add New Expense</CardTitle>
+          <CardDescription>Create a new expense for your household</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Expense title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category.charAt(0).toUpperCase() + category.slice(1)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="due_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="paid_by"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Paid By</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select who paid" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {householdMembers.map((member) => (
+                            <SelectItem key={member._id} value={member._id}>
+                              {member.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={handleAddExpense}
-          className="w-full mt-4 bg-green-500 hover:bg-green-600 transition p-2 rounded-md font-bold"
-        >
-          Submit Expense
-        </button>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold">Expenses</h2>
-        <div className="space-y-4 mt-4">
-          {expenses && expenses.length > 0 ? (
-            expenses.map((expense) => (
-              <div
-                key={expense._id}
-                className={`p-4 border rounded-lg ${
-                  expense.status === 'paid' ? 'bg-gray-100 text-gray-500' : 'bg-white text-black'
-                }`}
-              >
-                <h3 className="text-xl font-bold">{expense.title}</h3>
-                <p>{expense.description}</p>
-                <p className="text-lg font-semibold">Total: ${expense.amount}</p>
-                {expense.recurring?.is_recurring && (
-                  <p className="text-sm text-purple-600">
-                    <span className="font-semibold">Recurring: </span>
-                    {expense.recurring.frequency?.charAt(0).toUpperCase() +
-                      expense.recurring.frequency?.slice(1)}
-                    {expense.recurring.end_date &&
-                      ` until ${new Date(expense.recurring.end_date).toLocaleDateString()}`}
-                  </p>
-                )}
-                <p
-                  className={`text-lg font-semibold ${
-                    expense.status === 'pending' ? 'text-red-500' : 'text-green-500'
-                  }`}
-                >
-                  Status: {expense.status}
-                </p>
-                <p>Category: {expense.category}</p>
-                <p>Due Date: {new Date(expense.due_date).toLocaleDateString()}</p>
-                <p>Created By: {expense.created_by.name}</p>
-                <div className="mt-2">
-                  <h4 className="font-semibold">Split Among:</h4>
-                  {expense.splits.map((split, index) => (
-                    <div key={index} className="flex justify-between">
-                      <span>{split.user_id.name}</span> <span>${split.amount}</span>
-                    </div>
-                  ))}
-                </div>
-                {expense.status !== 'paid' && userId === expense.created_by._id && (
-                  <div className="mt-2">
-                    <button
-                      onClick={() => handleMarkAsSettled(expense._id)}
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="text-lg font-medium">Split Options</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={splitMode === 'none' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSplitModeChange('none')}
                     >
-                      Mark as Settled
-                    </button>
+                      No Split
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={splitMode === 'even' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSplitModeChange('even')}
+                    >
+                      Split Evenly
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={splitMode === 'manual' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSplitModeChange('manual')}
+                    >
+                      Manual Split
+                    </Button>
                   </div>
+                </div>
+
+                {splitMode !== 'none' && (
+                  <>
+                    {renderSplitAmounts()}
+                    <div className="flex justify-between text-sm">
+                      <span>Total Amount: ${form.getValues('amount') || '0.00'}</span>
+                      <span>Split Total: ${calculateSplitTotal()}</span>
+                    </div>
+                  </>
                 )}
               </div>
-            ))
-          ) : (
-            <p>No expenses found.</p>
-          )}
-        </div>
-      </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Creating...' : 'Add Expense'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <Separator className="my-8" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Expense History</CardTitle>
+          <CardDescription>View and manage your household expenses</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Split Details</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {expenses.map((expense) => (
+                  <TableRow key={expense._id}>
+                    <TableCell className="font-medium">{expense.title}</TableCell>
+                    <TableCell>${expense.amount.toFixed(2)}</TableCell>
+                    <TableCell>{expense.category}</TableCell>
+                    <TableCell>{new Date(expense.due_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{expense.created_by.name}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {expense.splits.map((split) => (
+                          <div key={split.user_id._id} className="text-sm">
+                            <span className="font-medium">{split.user_id.name}:</span>{' '}
+                            <span className="text-muted-foreground">
+                              ${split.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={expense.status === 'paid' ? 'default' : 'secondary'}>
+                        {expense.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleStatusChange(
+                            expense._id,
+                            expense.status === 'paid' ? 'pending' : 'paid'
+                          )
+                        }
+                      >
+                        Mark as {expense.status === 'paid' ? 'Pending' : 'Paid'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {errorMessage && <ErrorMessage />}
     </div>
   );
 };
 
-export default Expense;
+export default ExpenseComponent;
