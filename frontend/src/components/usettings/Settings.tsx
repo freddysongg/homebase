@@ -1,9 +1,33 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { jwtDecode } from 'jwt-decode';
 import { useTheme } from '@/components/ThemeProvider';
-import { notificationService } from '@/utils/notificationService';
 
 interface UserProfile {
   _id: string;
@@ -13,85 +37,119 @@ interface UserProfile {
     notifications: {
       inApp: boolean;
     };
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
   };
 }
 
-const Settings = () => {
-  const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [preferences, setPreferences] = useState({
-    notifications: {
-      inApp: true
+const profileFormSchema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters').optional(),
+    confirmPassword: z.string().optional()
+  })
+  .refine(
+    (data) => {
+      if (data.newPassword && data.newPassword !== data.confirmPassword) {
+        return false;
+      }
+      return true;
     },
-    theme: 'system' as 'light' | 'dark'
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+    {
+      message: "Passwords don't match",
+      path: ['confirmPassword']
+    }
+  );
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
+const preferencesFormSchema = z.object({
+  theme: z.enum(['light', 'dark', 'system']),
+  notifications: z.boolean(),
+  emailNotifications: z.boolean()
+});
+
+const Settings = () => {
+  const { setTheme } = useTheme();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setError] = useState<string | null>(null);
+  const [, setSuccessMessage] = useState<string | null>(null);
+
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  });
+
+  const preferencesForm = useForm<z.infer<typeof preferencesFormSchema>>({
+    resolver: zodResolver(preferencesFormSchema),
+    defaultValues: {
+      theme: 'light',
+      notifications: true,
+      emailNotifications: true
+    }
+  });
 
   // Sync theme with ThemeProvider
   useEffect(() => {
-    setTheme(preferences.theme);
-  }, [preferences.theme, setTheme]);
-
-  // Sync notification preferences with notification service
-  useEffect(() => {
-    notificationService.setPreferences(preferences.notifications);
-  }, [preferences.notifications]);
+    if (profile?.preferences?.theme) {
+      setTheme(profile.preferences.theme);
+    }
+  }, [profile?.preferences?.theme, setTheme]);
 
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Token not found. Please log in again.');
-      }
+      if (!token) throw new Error('No token found');
 
       const decodedToken = jwtDecode(token) as { id: string };
       const userId = decodedToken.id;
 
       const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
+      if (!response.ok) throw new Error('Failed to fetch user profile');
 
       const userData = await response.json();
       const userProfile = userData.data;
 
       setProfile(userProfile);
-      setName(userProfile.name);
-      setEmail(userProfile.email);
-      setPreferences(
-        userProfile.preferences || {
-          notifications: {
-            inApp: true
-          },
-          theme: 'dark'
-        }
-      );
+
+      // Update form defaults
+      profileForm.reset({
+        name: userProfile.name,
+        email: userProfile.email
+      });
+
+      preferencesForm.reset({
+        theme: userProfile.preferences?.theme || 'light',
+        notifications: userProfile.preferences?.notifications?.inApp || true,
+        emailNotifications: true
+      });
+
+      // Clear any existing errors
+      setError(null);
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      setError('Failed to fetch user profile. Please try again.');
+      const err = error as Error;
+      setError(err.message || 'Failed to fetch user profile');
     }
   };
 
-  const handleUpdateProfile = async () => {
-    if (!name.trim() || !email.trim()) {
-      setError('Name and email are required.');
-      return;
-    }
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
+  const onProfileSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
@@ -99,7 +157,7 @@ const Settings = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token || !profile?._id) {
-        throw new Error('Token or user ID not found. Please log in again.');
+        throw new Error('Token or user ID not found');
       }
 
       const response = await fetch(`http://localhost:5001/api/users/${profile._id}`, {
@@ -109,9 +167,10 @@ const Settings = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          name,
-          email,
-          preferences
+          name: values.name,
+          email: values.email,
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword || undefined
         })
       });
 
@@ -120,116 +179,218 @@ const Settings = () => {
         throw new Error(errorData.message || 'Failed to update profile');
       }
 
-      const updatedProfile = await response.json();
-      setProfile(updatedProfile.data);
       setSuccessMessage('Profile updated successfully!');
-      location.reload();
-
-      // Only show in-app notification for settings update
-      if (preferences.notifications.inApp) {
-        notificationService.sendNotification(
-          'inApp',
-          'Settings Updated',
-          'Your settings have been saved successfully'
-        );
-      }
+      await fetchUserProfile(); // Refresh user data
     } catch (error) {
-      console.error('Error updating profile:', error);
       const err = error as Error;
-      setError(err.message || 'Failed to update profile. Please try again.');
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onPreferencesSubmit = async (values: z.infer<typeof preferencesFormSchema>) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+
+      const response = await fetch('http://localhost:5001/api/users/preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(values)
+      });
+
+      if (!response.ok) throw new Error('Failed to update preferences');
+
+      fetchUserProfile();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update preferences';
+      console.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white dark:bg-dark-primary text-gray-900 dark:text-white rounded-lg shadow-lg my-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">User Settings</h1>
+    <div className="container mx-auto p-6 space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Settings</CardTitle>
+          <CardDescription>Manage your account settings and preferences</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="profile" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            </TabsList>
 
-      {successMessage && (
-        <div className="mb-4 p-2 bg-green-500 text-white rounded">{successMessage}</div>
-      )}
-      {error && <div className="mb-4 p-2 bg-red-500 text-white rounded">{error}</div>}
+            <TabsContent value="profile">
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                  <FormField
+                    control={profileForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="Your email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 rounded-md border bg-white dark:bg-dark-secondary text-gray-900 dark:text-white border-gray-300 dark:border-dark-border focus:ring focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 rounded-md border bg-white dark:bg-dark-secondary text-gray-900 dark:text-white border-gray-300 dark:border-dark-border focus:ring focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
+                  <Separator className="my-6" />
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Notification Preferences</h2>
-          <div className="space-y-2">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={preferences.notifications.inApp}
-                onChange={(e) =>
-                  setPreferences({
-                    ...preferences,
-                    notifications: {
-                      inApp: e.target.checked
-                    }
-                  })
-                }
-                className="w-4 h-4 text-blue-500 dark:text-blue-400"
-              />
-              <span>Show In-App Notifications</span>
-            </label>
-          </div>
-        </div>
+                  <div className="space-y-6">
+                    <FormField
+                      control={profileForm.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Password</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="Enter current password"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={profileForm.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>New Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Enter new password" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Leave blank if you do not want to change your password
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={profileForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="Confirm new password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Theme</h2>
-          <div className="flex space-x-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                checked={preferences.theme === 'light'}
-                onChange={() => setPreferences({ ...preferences, theme: 'light' })}
-                className="w-4 h-4 text-blue-500 dark:text-blue-400"
-              />
-              <span>Light</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                checked={preferences.theme === 'dark'}
-                onChange={() => setPreferences({ ...preferences, theme: 'dark' })}
-                className="w-4 h-4 text-blue-500 dark:text-blue-400"
-              />
-              <span>Dark</span>
-            </label>
-          </div>
-        </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save Profile'}
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
 
-        <button
-          onClick={handleUpdateProfile}
-          disabled={isLoading}
-          className="w-full mt-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white transition p-2 rounded-md font-bold disabled:bg-gray-400 dark:disabled:bg-gray-600"
-        >
-          {isLoading ? 'Updating...' : 'Save Changes'}
-        </button>
-      </div>
+            <TabsContent value="preferences">
+              <Form {...preferencesForm}>
+                <form
+                  onSubmit={preferencesForm.handleSubmit(onPreferencesSubmit)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={preferencesForm.control}
+                    name="theme"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Theme</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select theme" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="light">Light</SelectItem>
+                            <SelectItem value="dark">Dark</SelectItem>
+                            <SelectItem value="system">System</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={preferencesForm.control}
+                    name="notifications"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <div>
+                          <FormLabel>Push Notifications</FormLabel>
+                          <FormDescription>
+                            Receive push notifications for important updates
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={preferencesForm.control}
+                    name="emailNotifications"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <div>
+                          <FormLabel>Email Notifications</FormLabel>
+                          <FormDescription>
+                            Receive email notifications for important updates
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save Preferences'}
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

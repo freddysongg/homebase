@@ -4,10 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuLink
+} from '@/components/ui/navigation-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [hasHousehold, setHasHousehold] = useState<boolean>(false);
@@ -73,152 +87,152 @@ const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className="bg-white dark:bg-dark-primary text-gray-900 dark:text-white p-4 border-b border-gray-200 dark:border-dark-border">
-      <div className="max-w-7xl mx-20 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold hover:text-blue-600 dark:hover:text-blue-400">
-          HomeBase
-        </Link>
-        <div className="hidden md:flex flex-grow justify-center space-x-16">
-          {isLoggedIn && (
-            <>
-              {hasHousehold && (
+    <nav className="border-b bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <Link href="/" className="text-2xl font-bold hover:text-primary">
+            HomeBase
+          </Link>
+
+          <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+              {isLoggedIn && (
                 <>
-                  <Link
-                    href="/dashboard"
-                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                      pathname === '/dashboard' ? 'text-blue-600 dark:text-blue-400' : ''
-                    }`}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/expense"
-                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                      pathname === '/expense' ? 'text-blue-600 dark:text-blue-400' : ''
-                    }`}
-                  >
-                    Expenses
-                  </Link>
-                  <Link
-                    href="/chore"
-                    className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                      pathname === '/chore' ? 'text-blue-600 dark:text-blue-400' : ''
-                    }`}
-                  >
-                    Chores
-                  </Link>
+                  {hasHousehold && (
+                    <>
+                      <NavigationMenuItem>
+                        <Link href="/dashboard" legacyBehavior passHref>
+                          <NavigationMenuLink
+                            className={`px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
+                              pathname === '/dashboard' ? 'text-primary' : ''
+                            }`}
+                          >
+                            Dashboard
+                          </NavigationMenuLink>
+                        </Link>
+                      </NavigationMenuItem>
+                      <NavigationMenuItem>
+                        <Link href="/expense" legacyBehavior passHref>
+                          <NavigationMenuLink
+                            className={`px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
+                              pathname === '/expense' ? 'text-primary' : ''
+                            }`}
+                          >
+                            Expenses
+                          </NavigationMenuLink>
+                        </Link>
+                      </NavigationMenuItem>
+                      <NavigationMenuItem>
+                        <Link href="/chore" legacyBehavior passHref>
+                          <NavigationMenuLink
+                            className={`px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
+                              pathname === '/chore' ? 'text-primary' : ''
+                            }`}
+                          >
+                            Chores
+                          </NavigationMenuLink>
+                        </Link>
+                      </NavigationMenuItem>
+                    </>
+                  )}
+                  <NavigationMenuItem>
+                    <Link href="/homes" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={`px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
+                          pathname === '/homes' ? 'text-primary' : ''
+                        }`}
+                      >
+                        Homes
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link href="/usettings" legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={`px-3 py-2 text-sm font-medium transition-colors hover:text-primary ${
+                          pathname === '/usettings' ? 'text-primary' : ''
+                        }`}
+                      >
+                        Settings
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
                 </>
               )}
-              <Link
-                href="/homes"
-                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                  pathname === '/homes' ? 'text-blue-600 dark:text-blue-400' : ''
-                }`}
-              >
-                Homes
-              </Link>
-              <Link
-                href="/usettings"
-                className={`hover:text-blue-600 dark:hover:text-blue-400 transition ${
-                  pathname === '/usettings' ? 'text-blue-600 dark:text-blue-400' : ''
-                }`}
-              >
-                Settings
-              </Link>
-            </>
-          )}
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <div className="hidden md:flex items-center gap-4">
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2">
+                    {userName || 'User'}
+                    <span className="sr-only">Toggle user menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="default">
+                <Link href="/login">Login</Link>
+              </Button>
+            )}
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
         </div>
-        <div className="hidden md:flex items-center space-x-6">
-          {isLoggedIn ? (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="hover:text-blue-400 transition"
-              >
-                {userName || 'User'} ▼
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-dark-secondary ring-1 ring-black ring-opacity-5 z-50">
-                  <div className="py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-primary"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link href="/login" className="hover:text-blue-400 transition">
-              Login
-            </Link>
-          )}
-        </div>
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden focus:outline-none">
-          {isOpen ? '✖' : '☰'}
-        </button>
+
+        {isOpen && (
+          <div className="md:hidden py-4 space-y-2">
+            {isLoggedIn && (
+              <>
+                {hasHousehold && (
+                  <>
+                    <Button variant="ghost" asChild className="w-full justify-start">
+                      <Link href="/dashboard">Dashboard</Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="w-full justify-start">
+                      <Link href="/expense">Expenses</Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="w-full justify-start">
+                      <Link href="/chore">Chores</Link>
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" asChild className="w-full justify-start">
+                  <Link href="/homes">Homes</Link>
+                </Button>
+                <Button variant="ghost" asChild className="w-full justify-start">
+                  <Link href="/usettings">Settings</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-destructive"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </>
+            )}
+            {!isLoggedIn && (
+              <Button variant="default" asChild className="w-full">
+                <Link href="/login">Login</Link>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
-      {isOpen && (
-        <div className="md:hidden flex flex-col items-center mt-4 space-y-2">
-          {isLoggedIn && (
-            <>
-              {hasHousehold && (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="hover:text-blue-400 transition"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/expense"
-                    className="hover:text-blue-400 transition"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Expenses
-                  </Link>
-                  <Link
-                    href="/chore"
-                    className="hover:text-blue-400 transition"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Chores
-                  </Link>
-                </>
-              )}
-              <Link
-                href="/homes"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
-                Homes
-              </Link>
-              <Link
-                href="/usettings"
-                className="hover:text-blue-400 transition"
-                onClick={() => setIsOpen(false)}
-              >
-                Settings
-              </Link>
-              <button onClick={handleLogout} className="hover:text-blue-400 transition">
-                Logout
-              </button>
-            </>
-          )}
-          {!isLoggedIn && (
-            <Link
-              href="/login"
-              className="hover:text-blue-400 transition"
-              onClick={() => setIsOpen(false)}
-            >
-              Login
-            </Link>
-          )}
-        </div>
-      )}
     </nav>
   );
 };
