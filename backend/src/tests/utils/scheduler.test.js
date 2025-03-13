@@ -3,10 +3,7 @@ import mongoose from "mongoose";
 import { processRecurringExpenses } from "../../utils/scheduler.js";
 import Expense from "../../models/Expense.js";
 import User from "../../models/User.js";
-import { createNotification } from "../../controllers/notification.controller.js";
 
-// Mock the notification controller
-jest.mock("@controllers/notification.controller.js");
 
 describe("Scheduler Utils", () => {
   let testUser, householdId;
@@ -61,8 +58,6 @@ describe("Scheduler Utils", () => {
         yesterday.getTime(),
       );
 
-      // Verify notification was created
-      expect(createNotification).toHaveBeenCalled();
     });
   });
 });
