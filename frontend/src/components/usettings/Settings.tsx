@@ -64,8 +64,11 @@ const profileFormSchema = z
 
 const preferencesFormSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
-  notifications: z.boolean(),
-  emailNotifications: z.boolean()
+  notifications: z.object({
+    email: z.boolean(),
+    push: z.boolean(),
+    inApp: z.boolean()
+  })
 });
 
 const Settings = () => {
@@ -86,14 +89,17 @@ const Settings = () => {
     }
   });
 
-  const preferencesForm = useForm<z.infer<typeof preferencesFormSchema>>({
-    resolver: zodResolver(preferencesFormSchema),
-    defaultValues: {
-      theme: 'light',
-      notifications: true,
-      emailNotifications: true
+const preferencesForm = useForm<z.infer<typeof preferencesFormSchema>>({
+  resolver: zodResolver(preferencesFormSchema),
+  defaultValues: {
+    theme: 'system',
+    notifications: {
+      email: true,
+      push: true,
+      inApp: true
     }
-  });
+  }
+});
 
   // Sync theme with ThemeProvider
   useEffect(() => {
@@ -148,8 +154,11 @@ const Settings = () => {
 
       preferencesForm.reset({
         theme: userProfile.preferences?.theme || 'light',
-        notifications: userProfile.preferences?.notifications?.inApp || true,
-        emailNotifications: true
+        notifications: {
+          email: userProfile.preferences?.notifications?.email || true,
+          push: userProfile.preferences?.notifications?.push || true,
+          inApp: userProfile.preferences?.notifications?.inApp || true
+        }
       });
 
       // Clear any existing errors
@@ -205,35 +214,43 @@ const Settings = () => {
     }
   };
 
-  const onPreferencesSubmit = async (values: z.infer<typeof preferencesFormSchema>) => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
+const onPreferencesSubmit = async (values: z.infer<typeof preferencesFormSchema>) => {
+  alert('Feature Coming Soon');
+  return;
 
-      const response = await fetch('http://localhost:5001/api/users/preferences', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(values)
-      });
+  console.log('Submitting preferences:', values);
+  setIsLoading(true);
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No token found');
 
-      if (!response.ok) throw new Error('Failed to update preferences');
+    const payload = {
+      preferences: values 
+    };
 
-      // Update theme in the UI
-      setTheme(values.theme);
+    const response = await fetch(`http://localhost:5001/api/users/preferences`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload) 
+    });
 
-      // Refresh user data
-      fetchUserProfile();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update preferences';
-      console.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    if (!response.ok) throw new Error('Failed to update preferences');
+
+    // Update theme in the UI
+    setTheme(values.theme);
+
+    // Refresh user data
+    fetchUserProfile();
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update preferences';
+    console.error(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -374,7 +391,7 @@ const Settings = () => {
 
                   <FormField
                     control={preferencesForm.control}
-                    name="notifications"
+                    name="notifications.push"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between">
                         <div>
@@ -392,17 +409,20 @@ const Settings = () => {
 
                   <FormField
                     control={preferencesForm.control}
-                    name="emailNotifications"
+                    name="notifications.inApp" // Correctly access the nested field
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between">
                         <div>
-                          <FormLabel>Email Notifications</FormLabel>
+                          <FormLabel>In-App Notifications</FormLabel>
                           <FormDescription>
-                            Receive email notifications for important updates
+                            Receive in-app notifications for important updates
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value} // `field.value` is now a boolean
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
