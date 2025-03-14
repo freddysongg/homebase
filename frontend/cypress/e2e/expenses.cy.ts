@@ -18,9 +18,7 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     // Check if the form fields are visible
     cy.get('input[name="title"]').should('be.visible');
     cy.get('input[name="amount"]').should('be.visible');
-    cy.get('select[name="category"]').should('be.visible');
     cy.get('input[name="due_date"]').should('be.visible');
-    cy.get('select[name="paid_by"]').should('be.visible');
 
     // Check if the split options buttons are visible
     cy.contains('button', 'Split Evenly').should('be.visible');
@@ -31,12 +29,19 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     // Fill out the form
     cy.get('input[name="title"]').type('Groceries');
     cy.get('input[name="amount"]').type('100');
-    cy.get('select[name="category"]').select('groceries');
+
+    // Interact with shadcn select for category
+    cy.get('[data-testid="category-select"]').click(); // Open the dropdown
+    cy.contains('div', 'Groceries').click(); // Select the option
+
     cy.get('input[name="due_date"]').type('2023-12-31');
-    cy.get('select[name="paid_by"]').select('Alice'); // Replace 'Alice' with a valid user name
+
+    // Interact with shadcn select for paid_by
+    cy.get('[data-testid="paid-by-select"]').click(); // Open the dropdown
+    cy.contains('div', 'Cypress').click(); // Select the option
 
     // Select users to split with
-    cy.contains('button', 'Alice').click(); // Replace 'Alice' with a valid user name
+    cy.contains('button', 'Cypress').click();
 
     // Submit the form
     cy.contains('button', 'Add Expense').click();
@@ -45,7 +50,7 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     cy.get('table').should('contain', 'Groceries');
     cy.get('table').should('contain', '$100.00');
     cy.get('table').should('contain', 'groceries');
-    cy.get('table').should('contain', '12/31/2023'); // Adjust date format as needed
+    cy.get('table').should('contain', '12/31/2023');
   });
 
   it('should mark an expense as paid', () => {
@@ -70,13 +75,20 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     // Fill out the form
     cy.get('input[name="title"]').type('Rent');
     cy.get('input[name="amount"]').type('1000');
-    cy.get('select[name="category"]').select('rent');
+
+    // Interact with shadcn select for category
+    cy.get('[data-testid="category-select"]').click(); // Open the dropdown
+    cy.contains('div', 'rent').click(); // Select the option
+
     cy.get('input[name="due_date"]').type('2023-12-31');
-    cy.get('select[name="paid_by"]').select('Cypress'); 
+
+    // Interact with shadcn select for paid_by
+    cy.get('[data-testid="paid-by-select"]').click(); // Open the dropdown
+    cy.contains('div', 'Cypress').click(); // Select the option
 
     // Select users to split with
-    cy.contains('button', 'Cypress').click(); 
-    cy.contains('button', 'Cypress 2').click(); 
+    cy.contains('button', 'Cypress').click();
+    cy.contains('button', 'Cypress 2').click();
 
     // Click "Split Evenly"
     cy.contains('button', 'Split Evenly').click();
@@ -89,13 +101,20 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     // Fill out the form
     cy.get('input[name="title"]').type('Utilities');
     cy.get('input[name="amount"]').type('200');
-    cy.get('select[name="category"]').select('utilities');
+
+    // Interact with shadcn select for category
+    cy.get('[data-testid="category-select"]').click(); // Open the dropdown
+    cy.contains('div', 'Utilities').click(); // Select the option
+
     cy.get('input[name="due_date"]').type('2023-12-31');
-    cy.get('select[name="paid_by"]').select('Alice'); // Replace 'Alice' with a valid user name
+
+    // Interact with shadcn select for paid_by
+    cy.get('[data-testid="paid-by-select"]').click(); // Open the dropdown
+    cy.contains('div', 'Cypress').click(); // Select the option
 
     // Select users to split with
-    cy.contains('button', 'Alice').click(); // Replace 'Alice' with a valid user name
-    cy.contains('button', 'Bob').click(); // Replace 'Bob' with a valid user name
+    cy.contains('button', 'Cypress').click();
+    cy.contains('button', 'Cypress 2').click();
 
     // Click "Manual Split"
     cy.contains('button', 'Manual Split').click();
@@ -107,5 +126,4 @@ describe('Expense Page - Create and Mark Expense as Settled', () => {
     // Verify the split total
     cy.contains('span', 'Split Total: $200.00').should('be.visible');
   });
-
 });
