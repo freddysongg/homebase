@@ -21,7 +21,13 @@ import { jwtDecode } from 'jwt-decode';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Home name must be at least 2 characters'),
-  address: z.string().min(5, 'Address must be at least 5 characters'),
+  address: z.object({
+    street: z.string().min(1, 'Street is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().min(1, 'State is required'),
+    zip: z.string().min(1, 'Zip code is required'),
+    country: z.string().min(1, 'Country is required')
+  }),
   code: z.string().default(() => Math.random().toString(36).substring(2, 8).toUpperCase())
 });
 
@@ -32,7 +38,13 @@ const joinFormSchema = z.object({
 interface Home {
   _id: string;
   name: string;
-  address: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
   code: string;
   members: Array<{ _id: string; name: string }>;
 }
@@ -48,7 +60,13 @@ const Homes = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      address: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: ''
+      },
       code: Math.random().toString(36).substring(2, 8).toUpperCase()
     }
   });
@@ -210,7 +228,7 @@ const Homes = () => {
         body: JSON.stringify({
           house_code: values.code,
           name: values.name,
-          address: values.address,
+          address: values.address, // Send address as an object
           members: [userId]
         })
       });
@@ -339,12 +357,64 @@ const Homes = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="address.street"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Street</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter address" {...field} />
+                        <Input placeholder="Enter street" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter city" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address.state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter state" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address.zip"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Zip Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter zip code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address.country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter country" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -401,7 +471,10 @@ const Homes = () => {
               <Card key={home._id} className="bg-muted">
                 <CardHeader>
                   <CardTitle className="text-lg">{home.name}</CardTitle>
-                  <CardDescription>{home.address}</CardDescription>
+                  <CardDescription>
+                    {home.address.street}, {home.address.city}, {home.address.state}{' '}
+                    {home.address.zip}, {home.address.country}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">

@@ -15,14 +15,8 @@ describe('HomeBase App Navigation and Backend Check', () => {
     cy.get('input[type="password"]').type('cypress');
     cy.get('button').contains('Login').click();
 
-    cy.url().should('include', '/homes');
-    cy.contains('User').should('be.visible');
-    });
-
-    it('should navigate to the Dashboard page', () => {
-      cy.visit('/dashboard');
-      cy.url().should('include', '/dashboard');
-      cy.contains('Dashboard').should('be.visible');
+    cy.url().should('include', '/dashboard');
+    cy.contains('Dashboard').should('be.visible');
     });
 
   it('should navigate to the Homes page', () => {
