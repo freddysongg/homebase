@@ -39,10 +39,10 @@ interface Split {
   amount: number;
 }
 
-interface SplitAmong {
-  user: string; // This matches the old implementation
-  amount: string;
-}
+// interface SplitAmong {
+//   user: string; // This matches the old implementation
+//   amount: string;
+// }
 
 interface Expense {
   _id: string;
@@ -80,7 +80,7 @@ const formSchema = z.object({
 const categories = ['rent', 'utilities', 'groceries', 'household', 'other'] as const;
 
 // Add this type for split mode
-type SplitMode = 'none' | 'even' | 'manual';
+type SplitMode = 'even' | 'manual';
 
 const ExpenseComponent = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -91,12 +91,14 @@ const ExpenseComponent = () => {
     'weekly' | 'monthly' | 'yearly' | null
   >(null);
   const [recurringEndDate, setRecurringEndDate] = useState('');
-  const [splitMode, setSplitMode] = useState<SplitMode>('none');
-  const [totalAmount] = useState<string>('');
-  const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
-  const [splitEvenly, setSplitEvenly] = useState(false);
+  const [splitMode, setSplitMode] = useState<SplitMode>('even');
+  // const [totalAmount] = useState<string>('');
+  // const [splitAmong, setSplitAmong] = useState<SplitAmong[]>([]);
+  // const [splitEvenly, setSplitEvenly] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,6 +110,12 @@ const ExpenseComponent = () => {
       paid_by: ''
     }
   });
+
+  const handleUserSelection = (userId: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -179,9 +187,35 @@ const ExpenseComponent = () => {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setUserId(decodedToken.id);
+    }
     fetchHouseholdMembers();
     fetchExpenses();
   }, []);
+
+  useEffect(() => {
+    setSplitMode('even');
+  }, []);
+
+  useEffect(() => {
+    if (splitMode === 'even' && selectedUsers.length > 0) {
+      const amount = form.getValues('amount');
+      if (amount) {
+        const evenAmount = (Number(amount) / selectedUsers.length).toFixed(2);
+        const newSplitAmounts = selectedUsers.reduce(
+          (acc, userId) => {
+            acc[userId] = evenAmount;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+        setSplitAmounts(newSplitAmounts);
+      }
+    }
+  }, [form.watch('amount'), selectedUsers, splitMode]);
 
   // const handleTotalAmountChange = (value: string) => {
   //   const numericValue = value.replace(/[^0-9.]/g, '');
@@ -200,56 +234,54 @@ const ExpenseComponent = () => {
   // };
 
   // Update split amounts when splitting evenly
-  useEffect(() => {
-    if (splitEvenly && totalAmount && splitAmong.length > 0) {
-      const evenAmount = (Number(totalAmount) / splitAmong.length).toFixed(2);
-      setSplitAmong((prevSplits) => prevSplits.map((entry) => ({ ...entry, amount: evenAmount })));
-    }
-  }, [totalAmount, splitAmong.length, splitEvenly]);
+  // useEffect(() => {
+  //   if (splitEvenly && totalAmount && splitAmong.length > 0) {
+  //     const evenAmount = (Number(totalAmount) / splitAmong.length).toFixed(2);
+  //     setSplitAmong((prevSplits) => prevSplits.map((entry) => ({ ...entry, amount: evenAmount })));
+  //   }
+  // }, [totalAmount, splitAmong.length, splitEvenly]);
 
   const validateExpense = (values: z.infer<typeof formSchema>) => {
-    if (splitMode !== 'none') {
-      const splitTotal = Object.values(splitAmounts).reduce(
-        (sum, amount) => sum + (parseFloat(amount) || 0),
-        0
-      );
+    const splitTotal = Object.values(splitAmounts).reduce(
+      (sum, amount) => sum + (parseFloat(amount) || 0),
+      0
+    );
 
-      const totalAmt = parseFloat(values.amount);
+    const totalAmt = parseFloat(values.amount);
 
-      if (Math.abs(splitTotal - totalAmt) > 0.01) {
-        setErrorMessage('Split amounts must equal the total amount');
-        return false;
-      }
+    if (Math.abs(splitTotal - totalAmt) > 0.01) {
+      setErrorMessage('Split amounts must equal the total amount');
+      return false;
     }
     return true;
   };
 
   const handleSplitModeChange = (mode: SplitMode) => {
     setSplitMode(mode);
-    if (mode === 'none') {
-      setSplitAmong([]);
-    } else if (mode === 'even') {
-      // Create even splits for all household members
+    if (mode === 'even') {
+      // Create even splits for selected users
       const amount = form.getValues('amount');
-      if (amount && householdMembers.length > 0) {
-        const evenAmount = (Number(amount) / householdMembers.length).toFixed(2);
-        setSplitAmong(
-          householdMembers.map((member) => ({
-            user: member._id,
-            amount: evenAmount
-          }))
+      if (amount && selectedUsers.length > 0) {
+        const evenAmount = (Number(amount) / selectedUsers.length).toFixed(2);
+        const newSplitAmounts = selectedUsers.reduce(
+          (acc, userId) => {
+            acc[userId] = evenAmount;
+            return acc;
+          },
+          {} as Record<string, string>
         );
-        setSplitEvenly(true);
+        setSplitAmounts(newSplitAmounts);
       }
     } else {
-      // For manual mode, initialize empty splits for all members
-      setSplitAmong(
-        householdMembers.map((member) => ({
-          user: member._id,
-          amount: ''
-        }))
+      // For manual mode, initialize empty splits for selected members
+      const newSplitAmounts = selectedUsers.reduce(
+        (acc, userId) => {
+          acc[userId] = '';
+          return acc;
+        },
+        {} as Record<string, string>
       );
-      setSplitEvenly(false);
+      setSplitAmounts(newSplitAmounts);
     }
   };
 
@@ -263,13 +295,10 @@ const ExpenseComponent = () => {
       if (!token) throw new Error('Token not found');
 
       // Convert split amounts to the format expected by the API
-      const splits =
-        splitMode === 'none'
-          ? []
-          : Object.entries(splitAmounts).map(([userId, amount]) => ({
-              user_id: userId,
-              amount: parseFloat(amount)
-            }));
+      const splits = Object.entries(splitAmounts).map(([userId, amount]) => ({
+        user_id: userId,
+        amount: parseFloat(amount)
+      }));
 
       const newExpense = {
         title: values.title,
@@ -303,14 +332,15 @@ const ExpenseComponent = () => {
       const createdExpense = await response.json();
       setExpenses((prevExpenses) => [...prevExpenses, createdExpense.data]);
 
-      // Reset form and state
       form.reset();
-      setSplitMode('none');
+      setSplitMode('even');
       setSplitAmounts({});
       setIsRecurring(false);
       setRecurringFrequency(null);
       setRecurringEndDate('');
       setErrorMessage('');
+
+      location.reload();
     } catch (error) {
       console.error('Error creating expense:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to create expense');
@@ -319,7 +349,15 @@ const ExpenseComponent = () => {
     }
   };
 
-  const handleStatusChange = async (expenseId: string, newStatus: 'pending' | 'paid') => {
+  const handleStatusChange = async (
+    expenseId: string,
+    newStatus: 'pending' | 'paid',
+    createdBy: string
+  ) => {
+    if (userId !== createdBy) {
+      alert('Only the creator of the expense can mark it as paid.');
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No token found');
@@ -336,10 +374,8 @@ const ExpenseComponent = () => {
       if (!response.ok) throw new Error('Failed to update expense status');
 
       fetchExpenses();
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to update expense status';
-      console.error(errorMessage);
+    } catch (error) {
+      console.error('Error updating expense status:', error);
     }
   };
 
@@ -348,31 +384,33 @@ const ExpenseComponent = () => {
 
   const renderSplitAmounts = () => (
     <div className="space-y-2">
-      {householdMembers.map((member) => (
-        <div key={member._id} className="flex items-center gap-4">
-          <span className="min-w-[120px] text-sm font-medium">{member.name}</span>
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            value={splitAmounts[member._id] || ''}
-            onChange={(e) => {
-              setSplitAmounts((prev: Record<string, string>) => ({
-                ...prev,
-                [member._id]: e.target.value
-              }));
-            }}
-            disabled={splitMode === 'even'}
-            className="max-w-[150px]"
-          />
-        </div>
-      ))}
+      {householdMembers
+        .filter((member) => selectedUsers.includes(member._id)) // Filter selected users
+        .map((member) => (
+          <div key={member._id} className="flex items-center gap-4">
+            <span className="min-w-[120px] text-sm font-medium">{member.name}</span>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={splitAmounts[member._id] || ''}
+              onChange={(e) => {
+                setSplitAmounts((prev) => ({
+                  ...prev,
+                  [member._id]: e.target.value
+                }));
+              }}
+              disabled={splitMode === 'even'}
+              className="max-w-[150px]"
+            />
+          </div>
+        ))}
     </div>
   );
 
   const calculateSplitTotal = () => {
     return Object.values(splitAmounts)
-      .reduce((sum: number, amount: string) => sum + (parseFloat(amount) || 0), 0)
+      .reduce((sum, amount) => sum + (parseFloat(amount) || 0), 0)
       .toFixed(2);
   };
 
@@ -481,14 +519,6 @@ const ExpenseComponent = () => {
                   <div className="flex gap-2">
                     <Button
                       type="button"
-                      variant={splitMode === 'none' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleSplitModeChange('none')}
-                    >
-                      No Split
-                    </Button>
-                    <Button
-                      type="button"
                       variant={splitMode === 'even' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => handleSplitModeChange('even')}
@@ -506,15 +536,29 @@ const ExpenseComponent = () => {
                   </div>
                 </div>
 
-                {splitMode !== 'none' && (
-                  <>
-                    {renderSplitAmounts()}
-                    <div className="flex justify-between text-sm">
-                      <span>Total Amount: ${form.getValues('amount') || '0.00'}</span>
-                      <span>Split Total: ${calculateSplitTotal()}</span>
+                <>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Select Users to Split With</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {householdMembers.map((member) => (
+                        <Button
+                          key={member._id}
+                          type="button"
+                          variant={selectedUsers.includes(member._id) ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleUserSelection(member._id)}
+                        >
+                          {member.name}
+                        </Button>
+                      ))}
                     </div>
-                  </>
-                )}
+                  </div>
+                  {renderSplitAmounts()}
+                  <div className="flex justify-between text-sm">
+                    <span>Total Amount: ${form.getValues('amount') || '0.00'}</span>
+                    <span>Split Total: ${calculateSplitTotal()}</span>
+                  </div>
+                </>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creating...' : 'Add Expense'}
@@ -578,9 +622,11 @@ const ExpenseComponent = () => {
                         onClick={() =>
                           handleStatusChange(
                             expense._id,
-                            expense.status === 'paid' ? 'pending' : 'paid'
+                            expense.status === 'paid' ? 'pending' : 'paid',
+                            expense.created_by._id
                           )
                         }
+                        disabled={userId !== expense.created_by._id}
                       >
                         Mark as {expense.status === 'paid' ? 'Pending' : 'Paid'}
                       </Button>

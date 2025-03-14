@@ -203,10 +203,7 @@ const ChoreComponent = () => {
     }
   };
 
-  const handleStatusChange = async (
-    choreId: string,
-    newStatus: 'pending' | 'in-progress' | 'completed'
-  ) => {
+  const handleStatusChange = async (choreId: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No token found');
@@ -217,7 +214,7 @@ const ChoreComponent = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: 'completed' })
       });
 
       if (!response.ok) {
@@ -471,7 +468,9 @@ const ChoreComponent = () => {
                   <TableRow key={chore._id}>
                     <TableCell className="font-medium">{chore.name}</TableCell>
                     <TableCell>{chore.description}</TableCell>
-                    <TableCell>{chore.assigned_to.map((user) => user.name).join(', ')}</TableCell>
+                    <TableCell>
+                      {chore.assigned_to.map((assignee) => assignee.name).join(', ')}
+                    </TableCell>
                     <TableCell>{new Date(chore.due_date).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Badge
@@ -487,24 +486,15 @@ const ChoreComponent = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        defaultValue={chore.status}
-                        onValueChange={(value) =>
-                          handleStatusChange(
-                            chore._id,
-                            value as 'pending' | 'in-progress' | 'completed'
-                          )
-                        }
-                      >
-                        <SelectTrigger className="w-[130px]">
-                          <SelectValue placeholder="Change status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in-progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {chore.status !== 'completed' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange(chore._id)}
+                        >
+                          Mark as Completed
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
