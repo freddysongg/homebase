@@ -69,7 +69,7 @@ const preferencesFormSchema = z.object({
 });
 
 const Settings = () => {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
@@ -101,6 +101,22 @@ const Settings = () => {
       setTheme(profile.preferences.theme);
     }
   }, [profile?.preferences?.theme, setTheme]);
+
+  useEffect(() => {
+    if (profile?.preferences?.theme) {
+      setTheme(profile.preferences.theme);
+      preferencesForm.setValue('theme', profile.preferences.theme);
+    }
+  }, [profile?.preferences?.theme, setTheme, preferencesForm]);
+
+  useEffect(() => {
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      setTheme(systemTheme);
+    }
+  }, [theme, setTheme]);
 
   const fetchUserProfile = async () => {
     try {
@@ -206,6 +222,10 @@ const Settings = () => {
 
       if (!response.ok) throw new Error('Failed to update preferences');
 
+      // Update theme in the UI
+      setTheme(values.theme);
+
+      // Refresh user data
       fetchUserProfile();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update preferences';
@@ -329,7 +349,13 @@ const Settings = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Theme</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={(value: 'light' | 'dark' | 'system') => {
+                            field.onChange(value);
+                            setTheme(value);
+                          }}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select theme" />
